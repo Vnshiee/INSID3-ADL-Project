@@ -1,0 +1,5 @@
+# Task 2: many-to-many unbalanced entropic optimal transport.
+_base_: ../base.yaml
+prototypes: {enabled: true, num_prototypes: 4, token_aggregation: lse, lse_temperature: 0.05,
+             region_matching: ot, ot_epsilon: 0.05, ot_rho: 0.5, ot_iters: 50}
+run: {exp_name: t2_ot_m4_e0.05_r0.5}

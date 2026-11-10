@@ -1,0 +1,4 @@
+# Sanity check of the Task-2 code path: M=1 must reproduce the baseline (1-shot).
+_base_: ../base.yaml
+prototypes: {enabled: true, num_prototypes: 1, token_aggregation: max, region_matching: prototype}
+run: {exp_name: t2_check_m1}

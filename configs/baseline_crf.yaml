@@ -1,0 +1,4 @@
+# Original INSID3 with CRF refinement (setting of paper Tab. 1). Needs the CRF package.
+_base_: base.yaml
+model: {mask_refiner: crf}
+run: {exp_name: baseline_crf}

@@ -1,0 +1,4 @@
+# Task 1 (d) image-dependent Wiener gain lambda_k(I) = beta * v_k / m_k(I).
+_base_: ../base.yaml
+debias: {mode: image, variance_source: calibration, strength: 1.0}
+run: {exp_name: t1_image_b1}

@@ -1,0 +1,17 @@
+# Dependencies of the research extensions (superset of the official requirements.txt).
+# torch / torchvision are installed first from the CUDA wheel index by setup_server.sh:
+#   pip install torch==2.7.1 torchvision==0.22.1 --index-url https://download.pytorch.org/whl/cu126
+# (official reference configuration: Python 3.10, PyTorch 2.7.1, CUDA 12.6)
+numpy>=2.0
+Pillow>=10.0
+einops>=0.8
+scikit-learn>=1.5
+pycocotools>=2.0
+tqdm>=4.60
+termcolor>=1.1.0
+torchmetrics>=0.11
+matplotlib
+pyyaml>=6.0          # experiment configs (new)
+pytest>=7.0          # test suite (new)
+gdown==5.2.0         # dataset download (Google Drive), as in docs/data.md
+pandas               # ISIC preprocessing script, as in docs/data.md

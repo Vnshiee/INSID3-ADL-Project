@@ -1,0 +1,5 @@
+# Task 2: soft maximum (weighted log-sum-exp), between weighted (T->inf) and max (T->0).
+_base_: ../base.yaml
+prototypes: {enabled: true, num_prototypes: 4, token_aggregation: lse, lse_temperature: 0.05,
+             region_matching: prototype}
+run: {exp_name: t2_lse_m4_t0.05}

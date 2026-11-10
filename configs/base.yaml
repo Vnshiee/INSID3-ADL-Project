@@ -1,0 +1,32 @@
+# Official INSID3 defaults (paper Tab. 6, opts.py). Every other config inherits this file.
+# Paths come from environment variables (see env.example.sh); nothing machine-specific here.
+model:
+  model_size: large            # DINOv3 ViT-L/16
+  image_size: 1024
+  svd_components: 500          # s
+  tau: 0.6
+  merge_threshold: 0.2         # alpha
+  mask_refiner: bilinear       # official script default; paper Tab. 1 numbers use crf
+  crf_size: 640
+  device: cuda
+  weights_path: null           # -> $INSID3_PRETRAIN_DIR/dinov3_vitl16_pretrain_lvd1689m-8aa4cbdd.pth
+  dinov3_repo: null            # -> $INSID3_DINOV3_REPO (local clone) or torch.hub GitHub
+debias:
+  mode: hard                   # official orthogonal-complement projection
+  calibration_path: ${env:INSID3_CALIBRATION_PATH,calibration/calib_large_1024.pt}
+prototypes:
+  enabled: false               # official single prototype
+data:
+  dataset: coco
+  data_root: ${env:INSID3_DATA_ROOT,data}
+  fold: 0
+  shots: 1
+  split: test
+  num_workers: 0
+run:
+  output_root: ${env:INSID3_OUTPUT_ROOT,outputs}
+  exp_name: base
+  seed: 0
+  resume: true
+  save_predictions: 0
+  log_every: 50

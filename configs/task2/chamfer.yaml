@@ -1,0 +1,4 @@
+# Task 2: many-to-many (bidirectional Chamfer) cluster-to-prototype-set matching.
+_base_: ../base.yaml
+prototypes: {enabled: true, num_prototypes: 4, token_aggregation: max, region_matching: chamfer}
+run: {exp_name: t2_chamfer_m4}

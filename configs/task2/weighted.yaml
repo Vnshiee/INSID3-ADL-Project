@@ -1,0 +1,4 @@
+# Task 2: mass-weighted similarity over normalised prototypes.
+_base_: ../base.yaml
+prototypes: {enabled: true, num_prototypes: 4, token_aggregation: weighted, region_matching: prototype}
+run: {exp_name: t2_weighted_m4}

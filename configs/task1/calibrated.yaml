@@ -1,0 +1,4 @@
+# Task 1 (c) component-wise MMSE attenuation lambda_k = beta * rho_k (needs calibration file).
+_base_: ../base.yaml
+debias: {mode: calibrated, strength: 1.0}
+run: {exp_name: t1_calibrated_b1}

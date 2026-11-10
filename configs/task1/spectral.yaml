@@ -1,0 +1,4 @@
+# Task 1 (b) data-free component-wise attenuation (soft rank knee). sharpness->inf == hard at knee_rank.
+_base_: ../base.yaml
+debias: {mode: spectral, knee_rank: 500, sharpness: 1.0}
+run: {exp_name: t1_spectral_k500_g1}

@@ -1,0 +1,5 @@
+# Task 2: M k-means prototypes, maximum similarity.
+_base_: ../base.yaml
+prototypes: {enabled: true, num_prototypes: 4, clustering: kmeans, cluster_space: original,
+             token_aggregation: max, region_matching: prototype}
+run: {exp_name: t2_max_m4}

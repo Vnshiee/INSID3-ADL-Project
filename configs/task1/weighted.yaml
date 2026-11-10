@@ -1,0 +1,4 @@
+# Task 1 (a) fixed weighted projection: x - alpha * B B^T x, B = top-s basis. alpha=1 == baseline.
+_base_: ../base.yaml
+debias: {mode: weighted, alpha: 0.75}
+run: {exp_name: t1_weighted_a0.75}

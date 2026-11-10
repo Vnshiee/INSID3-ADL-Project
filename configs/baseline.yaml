@@ -1,0 +1,3 @@
+# Original INSID3 (hard projection, single prototype). Reproduction target.
+_base_: base.yaml
+run: {exp_name: baseline}

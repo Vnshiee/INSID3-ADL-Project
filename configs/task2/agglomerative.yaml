@@ -1,0 +1,5 @@
+# Task 2: adaptive number of prototypes (agglomerative, same linkage as INSID3), capped at 8.
+_base_: ../base.yaml
+prototypes: {enabled: true, num_prototypes: 8, clustering: agglomerative, ref_tau: 0.6,
+             token_aggregation: max, region_matching: prototype}
+run: {exp_name: t2_agglo_tau0.6_max}

@@ -1,0 +1,4 @@
+# Ablation: no positional debiasing (s = 0 point of paper Fig. 7).
+_base_: base.yaml
+debias: {mode: none}
+run: {exp_name: baseline_no_debias}

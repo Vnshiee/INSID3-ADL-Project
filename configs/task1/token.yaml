@@ -1,0 +1,4 @@
+# Task 1 (e) token-dependent positional template subtraction with least-squares gain.
+_base_: ../base.yaml
+debias: {mode: token, template_source: calibration, token_gain: least_squares, strength: 1.0, max_gain: 2.0}
+run: {exp_name: t1_token_ls}
