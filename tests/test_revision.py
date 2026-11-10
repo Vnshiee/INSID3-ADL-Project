@@ -10,6 +10,7 @@ import sys
 import numpy as np
 import pytest
 import torch
+import yaml
 import torch.nn.functional as F
 from PIL import Image
 
@@ -175,8 +176,10 @@ def test_score_calibration(encoder, episode):
 
 # ───────────── scripts ─────────────
 
-def _write_corr(d, dists, exp, mode, debiased):
+def _write_corr(d, dists, exp, mode, debiased, center=False, eval_basis=False):
     os.makedirs(d, exist_ok=True)
+    with open(os.path.join(d, "config.yaml"), "w") as fp:
+        yaml.safe_dump({"debias": {"mode": mode, "center": center}, "model": {"basis_eval_mode": eval_basis}}, fp)
     with open(os.path.join(d, "episodes.jsonl"), "w") as fp:
         for i, dist in enumerate(dists):
             fp.write(json.dumps({"idx": i, "category": "cat", "pck_thresh": 100.0, "dist": dist}) + "\n")
@@ -190,11 +193,19 @@ def test_compare_all_correspondence(tmp_path, monkeypatch):
     base = rng.uniform(0, 30, size=(200, 5))
     _write_corr(tmp_path / "corr_hard" / "spair" / "test_seed0", base.tolist(), "corr_hard", "hard", True)
     _write_corr(tmp_path / "corr_tok" / "spair" / "test_seed0", (base * 0.8).tolist(), "corr_tok", "token", True)
+    # Also mode 'hard', but NOT the reference (centring / eval-mode basis / no debiasing):
+    _write_corr(tmp_path / "corr_a_center" / "spair" / "test_seed0", (base * 2).tolist(), "corr_a_center", "hard",
+                True, center=True)
+    _write_corr(tmp_path / "corr_a_evalbasis" / "spair" / "test_seed0", (base * 2).tolist(), "corr_a_evalbasis",
+                "hard", True, eval_basis=True)
+    _write_corr(tmp_path / "corr_a_orig" / "spair" / "test_seed0", (base * 2).tolist(), "corr_a_orig", "hard", False)
     monkeypatch.syspath_prepend(SCRIPTS)
     out = str(tmp_path / "cmp")
     monkeypatch.setattr(sys, "argv", ["compare_all.py", "--root", str(tmp_path), "--out", out, "--bootstrap", "200"])
     runpy.run_path(os.path.join(SCRIPTS, "compare_all.py"), run_name="__main__")
     rows = [r for r in json.load(open(out + ".json")) if r.get("task") == "correspondence"]
+    assert len(rows) == 16 and all(r["reference"] == "corr_hard" for r in rows)
+    rows = [r for r in rows if r["exp"] == "corr_tok"]
     assert len(rows) == 4 and all(r["delta_pck"] >= 0 for r in rows)
     r10 = [r for r in rows if r["alpha"] == 0.1][0]
     assert r10["ci95"][0] <= r10["delta_pck"] <= r10["ci95"][1]

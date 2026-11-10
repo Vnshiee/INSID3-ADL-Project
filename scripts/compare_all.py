@@ -13,6 +13,7 @@ import os
 from collections import defaultdict
 
 import _bootstrap  # noqa: F401
+import yaml
 
 from compare_runs import compare_correspondence, compare_segmentation
 
@@ -75,13 +76,20 @@ def _correspondence_section(args, results):
             continue
         key = (m["model_size"], m["image_size"], m["svd_components"])
         groups[key][m["exp_name"]] = os.path.dirname(f)
+        with open(os.path.join(os.path.dirname(f), "config.yaml")) as fp:
+            c = yaml.safe_load(fp)
+        # The reference must be the plain official setting: hard projection, debiased, no centring, basis as
+        # in the official code. (Several runs have debias.mode=hard, e.g. center_hard and hard_evalbasis.)
+        m["is_reference"] = (m["debias_mode"] == "hard" and m["debiased"] and not c["debias"].get("center")
+                             and not c["model"].get("basis_eval_mode"))
         meta[(key, m["exp_name"])] = m
     lines = ["", "## Semantic correspondence: paired bootstrap over SPair-71k pairs",
-             "Reference per backbone/resolution/s: the run with debias.mode=hard and debiased=True.", "",
+             "Reference per backbone/resolution/s: the official setting (hard, debiased, no centring, official basis).", "",
              "| model | px | s | experiment | PCK@α | ref | method | Δ | 95% CI |", "|---|---|---|---|---|---|---|---|---|"]
     for key, exps in sorted(groups.items()):
-        ref = [e for e in exps if meta[(key, e)]["debias_mode"] == "hard" and meta[(key, e)]["debiased"]]
-        if not ref:
+        ref = sorted(e for e in exps if meta[(key, e)]["is_reference"])
+        if len(ref) != 1:
+            lines.append(f"| {key[0]} | {key[1]} | {key[2]} | skipped: {len(ref)} reference runs {ref} | | | | | |")
             continue
         ref = ref[0]
         for e in sorted(exps):
