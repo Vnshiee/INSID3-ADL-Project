@@ -26,10 +26,3 @@ This document catalogues candidate failure modes and summarizes the episode-leve
 | F8 | OT worse than prototype matching | balanced coverage (large ρ) penalises part-level clusters | ρ sweep; expect small ρ to win |
 | F9 | Reference grouped by position | grouping features still positional → prototypes = spatial halves | prototype visualisation; `c_group_debiased` |
 | F10 | Baseline far from published numbers | wrong weights / resolution / CRF off / data layout | EXPERIMENTAL_PROTOCOL.md §6, TROUBLESHOOTING.md |
-
-## Observed Findings (COCO Tuning Split, 1,000 Paired Episodes)
-
-* **`fail_none_vs_baseline.csv` (`t1_none` vs `baseline`):** Removing debiasing degrades mIoU by $-4.34\%$ ($p=0.000$); the mean episode IoU delta from `baseline` over `t1_none` is $+3.08\%$ overall, driven by all size terciles ($+2.41\%$ small, $+2.61\%$ medium, $+4.22\%$ large).
-* **`fail_spectral_k500_g4.csv` (`t1_spectral_k500_g4` vs `baseline`):** Spectral Wiener attenuation yields a mean foreground IoU delta of $+0.48\%$ across episodes, concentrated in the **small GT-area tercile** (`gt_area <= 26,530` px at $1024^2$, $n=334$: **$+0.98\%$**, $48.09\%$ vs $47.11\%$), vs $+0.36\%$ medium and $+0.11\%$ large.
-* **`fail_t2_lse_m2.csv` (`t2_lse_m2_t0.05` vs `baseline`):** Smooth LSE pooling improves the **medium GT-area tercile** ($n=333$) by **$+0.60\%$** ($60.57\%$ vs $59.97\%$), but drops $-0.68\%$ on small objects and $-0.44\%$ on large objects.
-* **F5 Confirmed (Threshold Confound):** Increasing $M$ to $4$ without recalibrating $\alpha=0.20$ lowers mIoU to $55.94\%$ (`max`) / $56.69\%$ (`lse`); naively raising $\alpha \in \{0.25, 0.30, 0.35\}$ drops recall steeply (`54.02%` $\rightarrow$ `52.17%` $\rightarrow$ `49.20%` for `max`).

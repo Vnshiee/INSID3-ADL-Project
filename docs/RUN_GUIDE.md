@@ -83,7 +83,7 @@ Files in `results/`:
 | `revision_selection_report.md` | what round 2 would select (exploratory) |
 | `consistency.json` | the same baseline on two different GPUs: same mean, but many individual episodes differ |
 
-Write the conclusions into `WhatWeDid.md` / `docs/RESULTS.md`.
+Write the conclusions from these files.
 
 ---
 

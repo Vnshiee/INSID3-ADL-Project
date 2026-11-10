@@ -5,7 +5,7 @@ Each module is described with the nine points you need to defend it: intuition, 
 view, implementation, why chosen, alternatives, limitations, expected behaviour, server validation.
 
 **Status labels used in this project:** *Original* (official INSID3), *Proposed* (implemented extension),
-*Hypothesis* (expected prior to execution), *Validated / Observed* (recorded in [RESULTS.md](RESULTS.md)).
+*Hypothesis* (expected prior to execution), *Validated / Observed* (added when the results are compiled).
 
 ---
 
@@ -113,15 +113,15 @@ Question investigated: does Task 1 change which reference parts Task 2 finds (ab
 and are the two gains additive (`c_selected` vs Task-1-only and Task-2-only)? *Hypothesis H4:* partially
 additive, because Task 1 changes the matching space and Task 2 the reference representation.
 
-## Hypotheses and Empirical Outcomes (see [RESULTS.md](RESULTS.md))
+## Hypotheses
 
-| ID | Hypothesis | Primary evidence | Observed Outcome |
-|---|---|---|---|
-| H1 | Adaptive debiasing ≥ hard projection | SPair PCK; COCO/PASCAL-Part mIoU, paired CI | **Mixed / Supported on tune & correspondence:** Spectral ($k=500, \gamma=4$) improves COCO tune by $+0.44\%$ ($p=0.040$, $+0.98\%$ small tercile) and ties baseline on COCO ($56.13\%$) and PASCAL-Part ($49.05\%$) test; `token_ls` ($52.86\%$) and `calibrated_b1` ($52.73\%$) exceed hard ($52.57\%$) on SPair point PCK@0.10. |
-| H1b | ρ̂ decays with k; the hard rank-500 cut removes components with substantial semantic energy | calibration plots | **Confirmed:** ViT-L 1024 px calibration yields $\hat{\rho}_{\text{top-}500} \approx 0.083$ mean positional share, while $57.4\%$ of total feature energy lies in those top-500 axes (`calib_large_1024_summary.json`). |
-| H2 | Multi-prototype gains grow with reference size/heterogeneity | ΔIoU by GT-area tercile | **Partially confirmed (nuanced):** `lse M=2` reaches $+0.60\%$ on the medium GT-area tercile (`fail_t2_lse_m2.csv`), whereas $M \ge 3$ suffers background bleed under fixed $\alpha=0.20$ and underperforms on unseen test folds. |
-| H3 | Non-linear aggregation (max/lse) beats weighted | tuning sweep | **Confirmed for LSE ($M=2$):** `lse` ($T=0.05$) at $M=2$ ($57.56\%$) outperforms `weighted` ($57.20\%$) and `max` ($57.25\%$). |
-| H4 | Tasks 1 and 2 are (partly) additive | combined vs single-task runs | **Not supported:** `c_selected` ($57.45\%$) on tune and `sel_combined` on test ($55.99\%$ COCO, $48.55\%$ PASCAL-Part) do not add gains over `sel_task1`. |
+| ID | Hypothesis | Primary evidence |
+|---|---|---|
+| H1 | Adaptive debiasing ≥ hard projection | SPair PCK; COCO/PASCAL-Part mIoU, paired CI |
+| H1b | ρ̂ decays with k; the hard rank-500 cut removes components with substantial semantic energy | calibration plots |
+| H2 | Multi-prototype gains grow with reference size/heterogeneity | ΔIoU by GT-area tercile |
+| H3 | Non-linear aggregation (max/lse) beats weighted | tuning sweep |
+| H4 | Tasks 1 and 2 are (partly) additive | combined vs single-task runs |
 
-A hypothesis counts as strictly supported only if the test-set paired 95 % CI excludes 0 on the main benchmarks
+Outcomes are added when the results are compiled. A hypothesis counts as strictly supported only if the test-set paired 95 % CI excludes 0 on the main benchmarks
 and the sign is consistent across benchmarks (EXPERIMENTAL_PROTOCOL.md §7).

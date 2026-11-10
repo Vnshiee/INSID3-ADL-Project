@@ -1,6 +1,6 @@
 # Experiments
 
-Status: **EXECUTED** for calibration, 77 COCO `train2014` tuning runs, 7 SPair-71k correspondence evaluations, and all 4-fold 1-shot/5-shot test benchmarks on COCO-20ⁱ and PASCAL-Part (`DATASETS="coco pascal_part"` on RTX 3070 8 GB; see [RESULTS.md](RESULTS.md)).
+Status: **EXECUTED** for calibration, 77 COCO `train2014` tuning runs, 7 SPair-71k correspondence evaluations, and all 4-fold 1-shot/5-shot test benchmarks on COCO-20ⁱ and PASCAL-Part (`DATASETS="coco pascal_part"` on RTX 3070 8 GB; tables in `results/`).
 Commands assume `env.sh` is configured (SERVER_SETUP.md). All runs are resumable.
 
 ## E0 — Environment and baseline reproduction

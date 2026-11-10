@@ -31,8 +31,8 @@ Two training-free extensions of INSID3 (topic.md), evaluated with the original p
 | 7 | Workflow scripts (setup, weights, data, run scripts) | **done & executed** |
 | 8 | Tests | 126 tests **executed and passing** |
 | 9 | Documentation | **done** |
-| 10 | Static & results audit | **done** (PROJECT_STATE.md) |
-| S1–S5 | GPU execution: calibration → 77 tune sweeps → SPair → test (COCO, PASCAL-Part) → analysis | **done** ([RESULTS.md](RESULTS.md)) |
+| 10 | Static & results audit | **done** |
+| S1–S5 | GPU execution: calibration → 77 tune sweeps → SPair → test (COCO, PASCAL-Part) → analysis | **done** (round 1; tables in `results/`) |
 
 ## Decision points (pre-registered)
 

@@ -5,7 +5,7 @@
 1. **Completed GPU evaluation scope.** All calibration, 77 COCO `train2014` tuning sweeps (77,000 episodes), 7 SPair-71k semantic correspondence runs (12,234 test pairs each), and 14 full 4-fold test evaluations across COCO-20ⁱ and PASCAL-Part (1-shot and 5-shot; 87,213 episodes) were executed on an NVIDIA GeForce RTX 3070 GPU (8 GB VRAM, CUDA 12.6, PyTorch 2.7.1) using bilinear upsampling.
 2. **Untested domains & CRF.** DenseCRF post-processing (`model.mask_refiner=crf`) and the remaining 7 auxiliary domain benchmarks listed in `EXPERIMENTAL_PROTOCOL.md` (LVIS-92ⁱ, PACO-Part, ISIC 2018, Chest X-ray, SUIM, iSAID-5ⁱ, PerMIS) were not executed due to single-GPU compute constraints; baseline Tab. 1 paper comparisons therefore reflect the bilinear pipeline (`56.13%` COCO-20ⁱ test, `49.13%` PASCAL-Part test).
 3. **Unit test suite.** The 126 automated unit tests in `tests/` use a deterministic synthetic encoder (`tests/conftest.py`) to verify tensor shapes, algebraic identities, invariants, CLI plumbing, and RNG isolation independently of weights/data.
-4. **SPair-71k statistical CIs.** `scripts/compare_all.py` executes fold-stratified paired bootstrap intervals for segmentation runs only; SPair-71k results in `RESULTS.md` report point PCK over all 12,234 pairs.
+4. **SPair-71k statistical CIs.** `scripts/compare_all.py` executes fold-stratified paired bootstrap intervals for segmentation runs only; round-1 SPair-71k results report point PCK over all 12,234 pairs.
 
 ## Of the methods
 

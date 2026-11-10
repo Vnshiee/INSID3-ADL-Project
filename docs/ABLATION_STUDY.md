@@ -1,7 +1,7 @@
 # Ablation study design
 
 All ablations run on COCO tuning episodes (EXPERIMENTAL_PROTOCOL.md §3) with bilinear upsampling;
-only the selected configurations go to the test benchmarks. Observed ablation tables are in [RESULTS.md](RESULTS.md).
+only the selected configurations go to the test benchmarks. Observed tables: `results/`.
 Each row names the question it answers, so a result can be interpreted without re-reading the code.
 
 ## Task 1
