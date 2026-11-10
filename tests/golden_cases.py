@@ -1,9 +1,9 @@
 """Golden outputs: proof that the readability rewrite changed no number.
 
 `compute_cases()` runs every debiasing mode and every prototype option of `insid3_ext` on fixed toy inputs
-(fake encoder, CPU) and returns {case name: tensor}. The outputs of the code *before* the rewrite are stored
-in tests/golden/golden_v5.pt (created once with `python tests/golden_cases.py`); tests/test_golden.py checks
-that the current code reproduces every one of them exactly (same masks, same floats).
+(GoldenEncoder below, CPU) and returns {case name: tensor}. The outputs of the code *before* the rewrite (v5)
+are stored in tests/golden/golden_v5_fullrank.pt (created with `python tests/golden_cases.py` on the v5 code);
+tests/test_golden.py checks that the current code reproduces every one of them.
 """
 
 import copy
@@ -19,9 +19,29 @@ sys.path.insert(0, os.path.dirname(HERE))
 
 from conftest import IMAGE_SIZE, FakeEncoder, make_image, make_mask  # noqa: E402
 
-GOLDEN = os.path.join(HERE, "golden", "golden_v5.pt")
+GOLDEN = os.path.join(HERE, "golden", "golden_v5_fullrank.pt")
 KW = dict(image_size=IMAGE_SIZE, svd_components=8, tau=0.6, merge_threshold=0.2,
           mask_refiner="bilinear", resize_to_orig_size=False, device="cpu")
+
+
+class GoldenEncoder(FakeEncoder):
+    """FakeEncoder with its positional field replaced by a FULL-RANK one with well separated strengths.
+
+    Why: FakeEncoder's empty-image features have rank 3 (constant image + a 3-direction field), so directions
+    4..C of their SVD are an arbitrary basis of a null space, which different CPUs / LAPACK libraries choose
+    differently, so the golden values would depend on the machine. Here every direction has its own strength
+    (ratio 0.88 between neighbours), so the SVD is unique up to sign on every machine.
+    """
+
+    def __init__(self):
+        super().__init__()
+        g = torch.Generator().manual_seed(4321)
+        C, h = self.pos.shape[1], self.pos.shape[-1]
+        dirs = torch.linalg.qr(torch.randn(C, C, generator=g, dtype=torch.float64))[0]         # (C, C)
+        patterns = torch.linalg.qr(torch.randn(h * h, C, generator=g, dtype=torch.float64))[0]  # (P, C)
+        strength = 1.5 * 0.88 ** torch.arange(C, dtype=torch.float64)
+        field = (dirs * strength) @ patterns.T                                                  # (C, P)
+        self.pos = field.float().view(1, C, h, h)
 
 
 def _episode(shots):
@@ -58,7 +78,7 @@ def compute_cases(tmpdir):
     from insid3_ext.prototypes import build_reference_prototypes, spherical_kmeans
 
     torch.manual_seed(0)
-    enc = FakeEncoder().eval()
+    enc = GoldenEncoder().eval()
     cpath = os.path.join(tmpdir, "cal.pt")
     cal = _calibration(enc, cpath)
     out = {}

@@ -5,7 +5,8 @@ How strictly:
   * floats: equal up to rtol 1e-3 / atol 1e-4. On the machine where the golden file was made the
     rewrite reproduced every value bit for bit; on another CPU, LAPACK (torch.linalg.svd) and the
     number of threads change the last digits (~1e-5). A real change of the code changes values by
-    orders of magnitude more, so this tolerance still catches it.
+    orders of magnitude more, so this tolerance still catches it. The toy encoder has a full-rank
+    positional field (golden_cases.GoldenEncoder), so its SVD is unique on every machine.
   * 'cal/template': an SVD may flip the sign of a direction (mathematically the same basis), which
     flips that row of the positional pattern; rows are sign-aligned and the first 8 (well separated)
     directions compared.
