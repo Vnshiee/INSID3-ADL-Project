@@ -1,8 +1,20 @@
 # INSID3 Research: Adaptive Positional Debiasing and Multi-Prototype Matching
 
+> **Revision (2026-11-10):** a second round of experiments re-examines the first-round results with
+> control experiments, 4,000 tuning episodes and paired statistics (`run_revision.sh`, guide:
+> [`docs/RUN_GUIDE.md`](docs/RUN_GUIDE.md)). Conclusions in this README and in `WhatWeDid.md` are being
+> revised accordingly. Literature notes: [`docs/READING_NOTES.md`](docs/READING_NOTES.md).
+> Code explained from the basics: [`docs/CODE_WALKTHROUGH.md`](docs/CODE_WALKTHROUGH.md).
+>
+> **Compute note.** Code development and the first experimental round ran on an RTX 3070 (8 GB). The
+> second-round benchmarks were computed on a larger GPU server for speed. Every run records its hardware
+> in `env.json`. Methods are only ever compared with a baseline computed on the same machine, because
+> different GPUs give slightly different floating-point results.
+
+
 [![Python 3.10](https://img.shields.io/badge/python-3.10-blue.svg)](https://www.python.org/)
 [![PyTorch 2.7.1](https://img.shields.io/badge/pytorch-2.7.1-orange.svg)](https://pytorch.org/)
-[![Tests Passing](https://img.shields.io/badge/tests-126%2F126%20passed-brightgreen.svg)](tests/)
+[![Tests Passing](https://img.shields.io/badge/tests-152%2F152%20passed-brightgreen.svg)](tests/)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Status: Experiments Completed](https://img.shields.io/badge/experiments-completed%20%26%20verified-success.svg)](results/)
 
@@ -124,7 +136,7 @@ All experiments were executed on an **NVIDIA GeForce RTX 3070 GPU (8 GB VRAM)** 
 │   ├── visualize.py          # Calibration curve and spectrum visualizer
 │   └── verify_upstream.py    # Byte-by-byte integrity checker for upstream files
 │
-├── tests/                    # Unit & regression test suite (126 passing tests)
+├── tests/                    # Unit & regression test suite (152 passing tests)
 │   ├── test_baseline_equivalence.py # Mathematical equivalence guarantees
 │   ├── test_debiasing.py     # Debiasing edge cases & boundary invariants
 │   ├── test_prototypes.py    # Spherical k-means & agglomerative clustering tests
@@ -164,7 +176,7 @@ pip install -r requirements.txt -r requirements-research.txt
 # Verify upstream code integrity (must output 40/40 identical)
 python scripts/verify_upstream.py
 
-# Run unit test suite (126 tests)
+# Run unit test suite (152 tests)
 pytest tests/ -q
 ```
 

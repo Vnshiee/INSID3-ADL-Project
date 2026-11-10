@@ -140,3 +140,12 @@ def test_read_jsonl_tolerates_truncated_tail(tmp_path):
     p = tmp_path / "e.jsonl"
     p.write_text('{"idx": 0}\n{"idx": 1}\n{"idx": 2, "inter"')
     assert [r["idx"] for r in experiment.read_jsonl(str(p))] == [0, 1]
+
+
+def test_interrupted_log_is_repaired_and_fully_read(tmp_path):
+    """Ctrl-C mid-write leaves a half line; records written after resuming must not be lost."""
+    p = tmp_path / "e.jsonl"
+    p.write_text('{"idx": 0}\n{"idx": 1}\n{"idx": 2, "int')          # interrupted while writing idx 2
+    with experiment._open_for_append(str(p)) as fp:                     # resume appends idx 2 and 3
+        fp.write('{"idx": 2}\n{"idx": 3}\n')
+    assert [r["idx"] for r in experiment.read_jsonl(str(p))] == [0, 1, 2, 3]

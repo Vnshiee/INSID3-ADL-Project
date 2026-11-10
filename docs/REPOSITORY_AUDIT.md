@@ -115,6 +115,17 @@ the rounded token of each source keypoint, cosine map over target tokens, Gaussi
    pipeline runs on CUDA under bf16 autocast, the features it receives must be fp32 in practice — most
    likely because DINOv3's final LayerNorm is executed in fp32 by autocast. *Inference, not verified on GPU*;
    our modules accumulate in fp32 anyway (`tests/test_dtype_bf16.py`).
+8. **The positional basis is estimated in training mode** (found 2026-11-10 while checking a calibration
+   warning). `INSID3.__init__` computes the basis (L44) before the scripts call `model.eval()`
+   (`inference_segmentation.py` L44-45), and the torch.hub DINOv3 model is returned in training mode. In
+   training mode DINOv3's RoPE multiplies all patch coordinates by a random factor in [1/2, 2]
+   (`pos_embed_rope_rescale_coords=2` for ViT-S/B/L; `dinov3/layers/rope_position_encoding.py`). The
+   official basis therefore comes from one randomly rescaled forward pass; it is reproducible only through
+   the seed (seed 0 in all official scripts and in ours), while all real features are computed in eval mode.
+   Measured on ViT-L/1024: a training-mode basis agrees with the eval-mode basis 0.90 over the top 500
+   directions (0.987 over the top 20); two training-mode bases from different random draws agree 0.84 over
+   the top 500. (Agreement = mean squared cosine of the principal angles; 1 = same subspace.) We keep the official behaviour as the baseline; `model.basis_eval_mode=true` computes the
+   basis in eval mode (experiment `t1_hard_evalbasis`).
 7. `datasets/coco.py` reads `splits/val/fold{f}.pkl`; image names include their sub-folder. We assume the
    val split lists `val2014` images (HSNet convention); the tuning split (`splits/trn`) is checked for
    overlap at run time and the count is written to `log.txt`.

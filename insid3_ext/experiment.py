@@ -61,20 +61,39 @@ def episode_fingerprint(batch: Dict[str, Any]) -> str:
 
 
 def read_jsonl(path: str) -> List[Dict[str, Any]]:
-    """Read records; a truncated final line (crash mid-write) is ignored."""
+    """Read the per-episode records.
+
+    A run that was interrupted (Ctrl-C, crash) can leave one half-written line. That line is skipped and
+    reading CONTINUES, so the episodes written after a resume are not lost. If an episode appears twice,
+    the later record wins.
+    """
     if not os.path.isfile(path):
         return []
-    out = []
+    by_idx: Dict[Any, Dict[str, Any]] = {}
     with open(path) as fp:
         for line in fp:
             line = line.strip()
             if not line:
                 continue
             try:
-                out.append(json.loads(line))
+                rec = json.loads(line)
             except json.JSONDecodeError:
-                break
-    return out
+                continue                       # half-written line from an interrupted run
+            by_idx[rec.get("idx", len(by_idx))] = rec
+    return list(by_idx.values())
+
+
+def _open_for_append(path: str):
+    """Open the episode log for appending; first finish a half-written last line with a newline, so the
+    next record starts on its own line instead of being glued to the broken one."""
+    if os.path.isfile(path) and os.path.getsize(path) > 0:
+        with open(path, "rb") as fp:
+            fp.seek(-1, os.SEEK_END)
+            ends_with_newline = fp.read(1) == b"\n"
+        if not ends_with_newline:
+            with open(path, "a") as fp:
+                fp.write("\n")
+    return open(path, "a")
 
 
 def _log(path: str, msg: str) -> None:
@@ -135,7 +154,7 @@ def run_segmentation(cfg: ExperimentConfig, model: Optional[torch.nn.Module] = N
     _log(log, f"run_dir={out}  episodes={n_total}  already_done={len(done)}")
     pred_dir = os.path.join(out, "predictions")
 
-    with open(jsonl, "a") as fp:
+    with _open_for_append(jsonl) as fp:
         for idx in tqdm(range(n_total), ncols=80):
             batch = ds[idx]                       # always drawn: keeps the RNG stream aligned
             fpr = episode_fingerprint(batch)
@@ -244,7 +263,7 @@ def run_correspondence(cfg: ExperimentConfig, model: Optional[torch.nn.Module] =
     n_total = len(ds) if cfg.run.max_episodes is None else min(len(ds), cfg.run.max_episodes)
     _log(log, f"run_dir={out}  pairs={n_total}  already_done={len(done)}  debiased={cfg.correspondence.debiased}")
 
-    with open(jsonl, "a") as fp:
+    with _open_for_append(jsonl) as fp:
         for idx in tqdm(range(n_total), ncols=80):
             if idx in done:
                 continue

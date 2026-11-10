@@ -60,7 +60,7 @@ INSID3_Research/
 | `run_segmentation(cfg, model)` | config | metrics dict; writes run directory |
 
 `INSID3Ext.last_diagnostics` (logged per episode): `num_prototypes`, `candidate_tokens`, `num_clusters`,
-`seed_cluster`, `seed_score`, optional `stage_ms` (with `run.profile_stages=true`).
+`seed_cluster`, `seed_score`, `seed_cross`, `forward_tokens`, `backward_tokens`, `selected_clusters`.
 
 ## 4. Extending
 
@@ -78,3 +78,20 @@ python -m pytest tests -q
 
 The fake encoder (tests/conftest.py) is a 16×16-patch conv with an injected low-rank positional field,
 8×8 tokens and 32 channels. It checks shapes, code paths, equivalences and invariants — not accuracy.
+
+## 6. Revision after the first experimental round
+
+| Addition | Where | Purpose |
+|---|---|---|
+| `debias.mode=random` | debiasing.py | hard projection of a random s-dim subspace (control) |
+| `debias.mode=pca` | debiasing.py, calibration.py (`feat_mean`, `feat_cov`) | hard projection of the top-s natural-image PCA directions (control) |
+| `debias.mode=rho_threshold` | debiasing.py | remove only components with ρ_k ≥ τ |
+| `PositionalDebiaser(..., normalize=False)` | debiasing.py | pre-normalisation output for energy measurements |
+| `prototypes.multishot=pooled` | prototypes.py (`_build_pooled`, weighted k-means) | multi-shot prototypes with original shot weighting; M = 1 ≡ INSID3 for any S |
+| `prototypes.score_calibration=reference` | model.py (`_score_scale`) | label-free rescaling of multi-prototype scores to the single-prototype scale |
+| `run.full_diagnostics=true` | model.py, builder.py | identical predictions, but candidates / seed / selected clusters / scores logged for baseline and Task-1 runs |
+| correspondence statistics | compare_all.py, compare_runs.py | paired bootstrap per PCK threshold vs the `hard` run of the same backbone |
+| seed averaging, combined from `c_` runs | select_best.py | multi-seed tuning; uses the combined stage's own winner |
+| `scripts/analyze_positional_bias.py` | new | residual positional bias per mode on held-out images |
+| `run_revision.sh`, `scripts/check_consistency.py` | new | phased revision experiments; same-configuration reproducibility check |
+| `debias.center` | model.py, config.py | subtract the natural-image mean feature before debiasing (control, DINOv3 App. A.2) |

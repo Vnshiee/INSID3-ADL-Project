@@ -54,7 +54,7 @@ def test_projection_idempotent(svd):
                                      ("calibrated_zero", {})])
 def test_zero_suppression_is_identity(svd, feats, mode, kw):
     if mode == "calibrated_zero":
-        d = PositionalDebiaser("calibrated", svd.U, gains=torch.zeros(32))
+        d = PositionalDebiaser("static", svd.U, gains=torch.zeros(32))
     else:
         d = _deb(svd, mode=mode, **kw)
     assert torch.allclose(d(feats), feats, atol=1e-6)
@@ -99,7 +99,7 @@ def test_calibrated_gains_clamped():
 def test_calibrated_indicator_equals_hard(svd, feats):
     rho = torch.zeros(32)
     rho[:S_COMP] = 1.0
-    d = PositionalDebiaser("calibrated", svd.U, gains=calibrated_gains(rho, 32, 1.0))
+    d = PositionalDebiaser("static", svd.U, gains=calibrated_gains(rho, 32, 1.0))
     assert torch.allclose(d(feats), _deb(svd, mode="hard")(feats), atol=1e-5)
 
 

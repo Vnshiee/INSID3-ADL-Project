@@ -17,6 +17,10 @@ require_cuda() {
 
 require_file() { [[ -f "$1" ]] || { echo "ERROR: missing $1. $2" >&2; exit 1; }; }
 
+nfolds() {   # official number of folds per benchmark
+  case "$1" in coco|pascal_part|paco_part) echo 4;; isaid) echo 3;; lvis) echo 10;; *) echo 1;; esac
+}
+
 # seg <config> <stage: tune|test> [extra --set overrides...]
 #   tune: COCO train2014 episodes (model selection); test: official benchmarks in $DATASETS, all folds.
 seg() {

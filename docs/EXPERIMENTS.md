@@ -54,7 +54,7 @@ Commands assume `env.sh` is configured (SERVER_SETUP.md). All runs are resumable
 | E4.1 | `./evaluate.sh` → `results/summary.md`, `results/comparisons.md` |
 | E4.2 | `python scripts/analyze_failures.py --a <baseline run> --b <method run> --out results/fail_<name>` |
 | E4.3 | `python scripts/visualize.py similarity …`, `… prototypes …` on chosen episodes |
-| E4.4 | runtime/memory: columns `ms/episode`, `peak MB` of `results/summary.md`; per-stage timings with `--set run.profile_stages=true` on a 200-episode subset (`run.max_episodes=200`) |
+| E4.4 | runtime/memory: columns `ms/episode`, `peak MB` of `results/summary.md` (run `STAGE=timing` alone on the GPU) |
 
 ## Measured Runtime on NVIDIA GeForce RTX 3070 (8 GB VRAM)
 

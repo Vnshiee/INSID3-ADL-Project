@@ -67,7 +67,7 @@ source env.sh
 $INSID3_PYTHON scripts/run_segmentation.py --config configs/baseline.yaml \
     --set run.max_episodes=20 run.exp_name=smoke run.save_predictions=5
 $INSID3_PYTHON scripts/run_segmentation.py --config configs/task2/max.yaml \
-    --set run.max_episodes=20 run.exp_name=smoke_t2 run.profile_stages=true
+    --set run.max_episodes=20 run.exp_name=smoke_t2
 ```
 
 Check `$INSID3_OUTPUT_ROOT/smoke/coco/fold0_shot1_seed0/{log.txt,metrics.json,predictions/}`.

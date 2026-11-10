@@ -21,16 +21,29 @@ import yaml
 from _bootstrap import ROOT
 
 
-def _runs(root):
-    out = []
+def _runs(root, shots=1, min_episodes=0):
+    """Complete tuning runs, averaged over seeds per exp_name (revision: multi-seed tuning)."""
+    per_exp = {}
     for f in glob.glob(os.path.join(root, "*", "coco-tune", "*", "metrics.json")):
         with open(f) as fp:
             m = json.load(fp)
+        if m.get("n_episodes", 0) < min_episodes:
+            print(f"[skip: {m.get('n_episodes')} < {min_episodes} episodes] {f}")
+            continue
+        if m.get("shots", 1) != shots:
+            continue                     # never rank 1-shot and k-shot runs together
         if not m.get("complete"):
             print(f"[skip incomplete] {f}")
             continue
         with open(os.path.join(os.path.dirname(f), "config.yaml")) as fp:
             m["config"] = yaml.safe_load(fp)
+        per_exp.setdefault(m["exp_name"], []).append(m)
+    out = []
+    for name, ms in per_exp.items():
+        m = dict(ms[0])
+        m["miou_seeds"] = [x["miou"] for x in ms]
+        m["miou"] = sum(m["miou_seeds"]) / len(ms)
+        m["n_episodes_total"] = sum(x["n_episodes"] for x in ms)
         out.append(m)
     return out
 
@@ -50,19 +63,24 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--root", required=True)
     ap.add_argument("--out-dir", default=os.path.join(ROOT, "configs", "selected"))
+    ap.add_argument("--shots", type=int, default=1, help="select on k-shot tuning runs (default 1)")
+    ap.add_argument("--min-episodes", type=int, default=0, help="ignore tuning runs with fewer episodes")
     args = ap.parse_args()
-    runs = _runs(args.root)
+    runs = _runs(args.root, args.shots, args.min_episodes)
     if not runs:
         raise SystemExit("No complete tuning runs found (run run_task1.sh / run_task2.sh with STAGE=tune).")
     os.makedirs(args.out_dir, exist_ok=True)
     base = [r for r in runs if r["exp_name"] == "baseline"]
-    t1, t2 = _best(runs, "t1_"), _best(runs, "t2_")
+    t1, t2, cb = _best(runs, "t1_"), _best(runs, "t2_"), _best(runs, "c_")
     rep = ["# Selection report (COCO train2014 tuning episodes; test sets untouched)", ""]
     if base:
         rep.append(f"Baseline tune mIoU: {base[0]['miou']:.2f}\n")
-    for name, lst in (("Task 1", t1), ("Task 2", t2), ("Combined", _best(runs, "c_"))):
-        rep += [f"## {name}", "", "| rank | exp | mIoU |", "|---|---|---|"]
-        rep += [f"| {i + 1} | {r['exp_name']} | {r['miou']:.2f} |" for i, r in enumerate(lst)]
+    rep.append("Note: differences smaller than the paired-bootstrap CI of the tuning set are not evidence; "
+               "check results/comparisons.md before treating rank 1 as better than the baseline.\n")
+    for name, lst in (("Task 1", t1), ("Task 2", t2), ("Combined", cb)):
+        rep += [f"## {name}", "", "| rank | exp | mIoU | data |", "|---|---|---|---|"]
+        rep += [f"| {i + 1} | {r['exp_name']} | {r['miou']:.2f} | seeds={len(r['miou_seeds'])}, "
+                f"episodes={r['n_episodes_total']} |" for i, r in enumerate(lst)]
         rep.append("")
 
     base_rel = os.path.relpath(os.path.join(ROOT, "configs", "base.yaml"), args.out_dir)
@@ -76,7 +94,15 @@ def main() -> None:
                 "model": {"merge_threshold": t2[0]["config"]["model"]["merge_threshold"]},
                 "run": {"exp_name": "sel_task2"}},
                f"best Task-2 tune run: {t2[0]['exp_name']} ({t2[0]['miou']:.2f})")
-    if t1 and t2:
+    if cb and t1 and t2:
+        # Revision: the combined stage's own winner decides (previously ignored).
+        c = cb[0]["config"]
+        _write(os.path.join(args.out_dir, "combined.yaml"),
+               {"_base_": base_rel, "debias": c["debias"], "prototypes": c["prototypes"],
+                "model": {"merge_threshold": c["model"]["merge_threshold"]},
+                "run": {"exp_name": "sel_combined"}},
+               f"best combined tune run: {cb[0]['exp_name']} ({cb[0]['miou']:.2f})")
+    elif t1 and t2:
         _write(os.path.join(args.out_dir, "combined.yaml"),
                {"_base_": base_rel, "debias": t1[0]["config"]["debias"],
                 "prototypes": t2[0]["config"]["prototypes"],

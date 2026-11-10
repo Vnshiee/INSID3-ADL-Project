@@ -60,10 +60,14 @@ def main() -> None:
                                                "prototypes.enabled=false"])
     from insid3_ext.builder import build_model
     from insid3_ext.calibration import PositionalStatsAccumulator, summarize_calibration
-    from insid3_ext.runtime import environment_report, resolve_device
+    from insid3_ext.runtime import environment_report, resolve_device, set_seed
     from utils.data import build_transform
 
     device = resolve_device(cfg.model.device)
+    # Seed exactly like scripts/run_segmentation.py BEFORE building the model: the official positional basis
+    # is computed in training mode with a random RoPE rescaling (see model.py), so only the same seed gives
+    # the same basis as in the experiments.
+    set_seed(cfg.run.seed)
     model = build_model(cfg).to(device).eval()
     svd = model._pos_svd
     acc = PositionalStatsAccumulator(svd.U, svd.coeff, cfg.model.svd_components, svd.grid)

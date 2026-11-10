@@ -81,9 +81,16 @@ def compare_correspondence(da, db, n_boot, seed, alpha=0.1):
         return float((d <= alpha * r["pck_thresh"]).mean())
     diff = np.array([pck(rb[i]) - pck(ra[i]) for i in common])
     rng = np.random.default_rng(seed)
-    boots = diff[rng.integers(0, len(diff), size=(n_boot, len(diff)))].mean(1) * 100
-    return {"alpha": alpha, "delta_pck": float(diff.mean() * 100),
+    chunks = []                                   # chunked: avoids an (n_boot x n_pairs) index array
+    for start in range(0, n_boot, 250):
+        b = min(250, n_boot - start)
+        chunks.append(diff[rng.integers(0, len(diff), size=(b, len(diff)))].mean(1) * 100)
+    boots = np.concatenate(chunks)
+    pa = float(np.mean([pck(ra[i]) for i in common]) * 100)
+    pb = float(np.mean([pck(rb[i]) for i in common]) * 100)
+    return {"alpha": alpha, "pck_a": pa, "pck_b": pb, "delta_pck": float(diff.mean() * 100),
             "ci95": [float(np.percentile(boots, 2.5)), float(np.percentile(boots, 97.5))],
+            "p_two_sided": float(min(1.0, 2 * min((boots <= 0).mean(), (boots >= 0).mean()))),
             "n_pairs": len(common)}
 
 

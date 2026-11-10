@@ -22,7 +22,7 @@ tune)
   seg configs/task2/max.yaml tune prototypes.include_global=true run.exp_name=t2_max_m4_global
   seg configs/task2/max.yaml tune prototypes.cluster_space=debiased run.exp_name=t2_max_m4_groupdeb
   # merge-threshold confound: max/lse scores are larger than the single-prototype score
-  for a in 0.25 0.3 0.35; do
+  for a in 0.1 0.15 0.25 0.3 0.35; do   # revision: also below the default 0.2
     seg configs/task2/max.yaml tune model.merge_threshold=$a run.exp_name=t2_max_m4_alpha$a
     seg configs/task2/lse.yaml tune model.merge_threshold=$a run.exp_name=t2_lse_m4_alpha$a
   done

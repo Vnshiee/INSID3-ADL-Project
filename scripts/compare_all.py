@@ -14,7 +14,7 @@ from collections import defaultdict
 
 import _bootstrap  # noqa: F401
 
-from compare_runs import compare_segmentation
+from compare_runs import compare_correspondence, compare_segmentation
 
 
 def main() -> None:
@@ -56,9 +56,44 @@ def main() -> None:
         lines.append(f"| {r['exp']} | {r['dataset']} | {r['shots']} | {len(r['folds'])} | {r['miou_a']:.2f} | "
                      f"{r['miou_b']:.2f} | {r['delta']:+.2f} | [{r['ci95'][0]:+.2f}, {r['ci95'][1]:+.2f}] | "
                      f"{r['p_two_sided']:.3f} |")
+    lines += _correspondence_section(args, results)
+    with open(args.out + ".json", "w") as fp:
+        json.dump(results, fp, indent=2)
     with open(args.out + ".md", "w") as fp:
         fp.write("\n".join(lines) + "\n")
     print("\n".join(lines))
+
+
+def _correspondence_section(args, results):
+    """Paired bootstrap over SPair pairs, vs the 'hard' run with the same backbone/resolution/s."""
+    groups = defaultdict(dict)       # (model_size, image_size, s) -> {exp: run_dir}
+    meta = {}
+    for f in glob.glob(os.path.join(args.root, "*", "spair", "*", "metrics.json")):
+        with open(f) as fp:
+            m = json.load(fp)
+        if not m.get("complete"):
+            continue
+        key = (m["model_size"], m["image_size"], m["svd_components"])
+        groups[key][m["exp_name"]] = os.path.dirname(f)
+        meta[(key, m["exp_name"])] = m
+    lines = ["", "## Semantic correspondence: paired bootstrap over SPair-71k pairs",
+             "Reference per backbone/resolution/s: the run with debias.mode=hard and debiased=True.", "",
+             "| model | px | s | experiment | PCK@α | ref | method | Δ | 95% CI |", "|---|---|---|---|---|---|---|---|---|"]
+    for key, exps in sorted(groups.items()):
+        ref = [e for e in exps if meta[(key, e)]["debias_mode"] == "hard" and meta[(key, e)]["debiased"]]
+        if not ref:
+            continue
+        ref = ref[0]
+        for e in sorted(exps):
+            if e == ref:
+                continue
+            for a in (0.05, 0.1, 0.15, 0.2):
+                r = compare_correspondence(exps[ref], exps[e], args.bootstrap, 0, a)
+                r.update(task="correspondence", exp=e, reference=ref, model=key[0], image_size=key[1], s=key[2])
+                results.append(r)
+                lines.append(f"| {key[0]} | {key[1]} | {key[2]} | {e} | {a} | {r['pck_a']:.2f} | {r['pck_b']:.2f} | "
+                             f"{r['delta_pck']:+.2f} | [{r['ci95'][0]:+.2f}, {r['ci95'][1]:+.2f}] |")
+    return lines
 
 
 if __name__ == "__main__":

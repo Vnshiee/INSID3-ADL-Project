@@ -1,39 +1,40 @@
-# Research Objectives: Adaptive Debiasing and Multi-Prototype Matching in INSID3
+# 5 INSID3: Training-Free In-Context Segmentation with DINOv3
 
-**Base Codebase:** https://github.com/visinf/INSID3
+**Code:** https://github.com/visinf/INSID3
 
-## Overview
-INSID3 [1] is a training-free in-context segmentation framework built on a frozen DINOv3 backbone. The pipeline removes positional bias from dense patch features, decomposes the target image into coherent candidate regions, and matches those regions with an annotated reference example using semantic correspondence and foreground prototypes — enabling segmentation without fine-tuning, decoders, or auxiliary models.
-
-This project investigates two extensions to the original INSID3 pipeline:
+### Summary
+INSID3 [5] is a training-free in-context segmentation method based on a frozen DINOv3 backbone. The method first removes positional bias from the extracted features, decomposes the target image into coherent candidate regions, and matches these regions with an annotated reference example using semantic correspondence and reference prototypes. This enables segmentation without fine-tuning, an additional decoder, or an auxiliary segmentation model.
 
 ---
 
-## 1. Adaptive Positional Debiasing
+### 5.1 Task 1: Adaptive Positional Debiasing
 
-### Motivation
-INSID3 estimates a low-dimensional positional-bias subspace via SVD on blank-image features and removes it uniformly by projecting every token onto its orthogonal complement. Applying the same hard projection across all components and images may suppress valid semantic texture or boundary information that overlaps with those directions.
+#### 5.1.1 Description
+INSID3 identifies a low-dimensional positional-bias subspace in DINOv3 features and removes this information by projecting the features onto its orthogonal complement. However, applying the same hard projection to all features may also suppress semantic information that overlaps with the estimated positional directions. You are required to introduce **Adaptive Positional Debiasing**, where positional components are suppressed according to their estimated contribution rather than being removed uniformly.
 
-### Objectives
-- Analyze the empirical contribution of INSID3's positional components across natural images and spatial patch positions.
-- Replace the hard orthogonal-complement projection with a parameterized, adaptive debiasing operator $\tilde{\mathbf{x}} = \text{normalize}(\mathbf{x} - \mathbf{U}(\boldsymbol{\lambda} \odot \mathbf{U}^\top \mathbf{x}))$.
-- Compare five adaptive mechanisms: fixed weighted attenuation, data-free spectral Wiener attenuation, calibrated MMSE gains, image-dependent scaling, and token-dependent spatial template subtraction.
-- Benchmark all strategies against the hard-projection baseline using the same datasets and protocols for both segmentation (mIoU) and semantic correspondence (SPair-71k PCK).
-
----
-
-## 2. Multi-Prototype Reference Matching
-
-### Motivation
-Standard INSID3 summarizes the annotated reference mask into a single global mean prototype vector. A single vector can under-represent objects composed of multiple distinct visual parts, textures, or sub-regions.
-
-### Objectives
-- Cluster DINOv3 patch features inside the annotated reference mask into multiple complementary prototypes (via spherical $k$-means and hierarchical agglomerative clustering).
-- Extend region matching so target candidate regions are scored against the full prototype set.
-- Evaluate multiple aggregation and many-to-many matching rules: maximum similarity, area-weighted averaging, log-sum-exp (LSE), symmetric Chamfer similarity, and unbalanced entropic Optimal Transport (Sinkhorn).
-- Quantify the effect of prototype count $M$ and downstream threshold interactions (`merge_threshold` $\alpha$) using identical mIoU evaluation protocols.
+#### 5.1.2 Instructions
+- Analyze the positional components identified by INSID3 and measure their contribution across different images and feature tokens.
+- Replace the hard orthogonal-complement projection with a soft debiasing mechanism that adaptively controls the amount of positional information removed.
+- Investigate different strategies, such as weighted projection, component-wise attenuation, or image-dependent positional correction.
+- Evaluate the modified method using the same datasets and experimental protocol as the original INSID3 implementation.
+- Compare the proposed method with the original positional-debiasing approach in terms of segmentation mIoU and semantic correspondence quality.
 
 ---
 
-## Reference
-[1] Claudia Cuttano, Gabriele Trivigno, Christoph Reich, Daniel Cremers, Carlo Masone, and Stefan Roth. INSID3: Training-free in-context segmentation with DINOv3. In *Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)*, 2026.
+### 5.2 Task 2: Multi-Prototype Reference Matching
+
+#### 5.2.1 Description
+INSID3 represents the annotated reference region using a compact semantic representation for matching candidate regions in the target image. A single reference representation may be insufficient when the annotated region contains multiple visual patterns, textures, or semantic parts. You are required to introduce **Multi-Prototype Reference Matching**, where the reference region is represented using multiple complementary prototypes instead of a single representation.
+
+#### 5.2.2 Instructions
+- Cluster the DINOv3 patch features within the annotated reference region to obtain multiple reference prototypes.
+- Modify the region-matching stage so that candidate target regions are compared against the complete set of reference prototypes.
+- Investigate different prototype aggregation strategies, such as maximum similarity, weighted similarity, or many-to-many matching.
+- Evaluate different numbers of reference prototypes and analyze their effect on segmentation performance.
+- Compare the proposed matching strategy with the original INSID3 matching mechanism using the same segmentation benchmarks and mIoU evaluation protocol.
+
+---
+
+### Reference
+[5] Claudia Cuttano, Gabriele Trivigno, Christoph Reich, Daniel Cremers, Carlo Masone, and Stefan Roth. INSID3: Training-free in-context segmentation with DINOv3. In *Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)*, 2026.
+
