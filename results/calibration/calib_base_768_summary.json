@@ -1,0 +1,8 @@
+{
+  "num_images": 500.0,
+  "mean_rho_top_s": 0.3941071927547455,
+  "mean_rho_tail": 0.04048895090818405,
+  "frac_positional_energy_in_top_s": 0.812690794467926,
+  "frac_feature_energy_in_top_s": 0.17485886812210083,
+  "frac_feature_energy_positional": 0.1700977236032486
+}
