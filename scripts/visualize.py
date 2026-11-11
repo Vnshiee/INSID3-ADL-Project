@@ -127,10 +127,11 @@ def plot_similarity(args) -> None:
         f, d, ref_size = _features(model, args.ref_image, args.target)
         if j == 0:                # original (non-debiased) DINOv3 similarity, shown once
             v0 = _ref_vector(f[0, 0], args, model, ref_size)
-            ax[2].imshow(torch.einsum("c,chw->hw", v0, f[0, 1]).float().cpu().numpy(), cmap="jet")
+            sim0 = (v0[:, None, None] * f[0, 1]).sum(dim=0)        # cosine of every target patch with v0
+            ax[2].imshow(sim0.float().cpu().numpy(), cmap="jet")
             ax[2].set_title("original features", fontsize=8)
         v = _ref_vector(d[0, 0], args, model, ref_size)
-        sim = torch.einsum("c,chw->hw", v, d[0, 1]).float().cpu().numpy()
+        sim = (v[:, None, None] * d[0, 1]).sum(dim=0).float().cpu().numpy()   # (h, w) cosine map
         ax[j + 3].imshow(sim, cmap="jet")
         ax[j + 3].set_title(f"{cfg.run.exp_name}\n(debias={cfg.debias.mode})", fontsize=8)
     for a in ax:
@@ -156,7 +157,8 @@ def plot_prototypes(args) -> None:
     assign = torch.full((h, w), -1, device=mk.device)
     toks = d[0, 0][:, mk].T
     assign[mk] = (toks @ pset.prototypes.T).argmax(1)
-    sims = torch.einsum("mc,chw->mhw", pset.prototypes, d[0, 1])
+    C_, h_, w_ = d[0, 1].shape
+    sims = (pset.prototypes @ d[0, 1].reshape(C_, -1)).reshape(-1, h_, w_)   # (M, h, w): one map per prototype
     agg = aggregate_similarities(sims.permute(1, 2, 0), pset.weights, cfg.prototypes.token_aggregation
                                  if cfg.prototypes.token_aggregation != "single" else "weighted",
                                  cfg.prototypes.lse_temperature)

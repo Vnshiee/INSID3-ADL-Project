@@ -60,7 +60,24 @@ python scripts/run_correspondence.py --config configs/correspondence/large.yaml 
 
 `--set key=value` changes any setting of `insid3_ext/config.py`.
 
-## 6.6 Common problems
+## 6.6 Figures for the report
+
+```bash
+python scripts/visualize.py calibration --calibration $INSID3_CALIBRATION_PATH --out figs/
+python scripts/visualize.py similarity --configs configs/baseline.yaml configs/task1/token.yaml \
+    --ref-image r.jpg --ref-mask r.png --target t.jpg --out figs/similarity.png
+python scripts/visualize.py prototypes --config configs/task2/lse.yaml \
+    --ref-image r.jpg --ref-mask r.png --target t.jpg --out figs/prototypes.png
+```
+
+* `calibration`: the positional share ρ per direction, the λ of every mode, the per-position energy map and the
+  first positional patterns (the figures in `results/round*/calibration/`).
+* `similarity`: like paper Fig. 4, the similarity of the reference object to every target patch, with original
+  features and for each given config. This shows the same-position bias, and how much of it each mode removes.
+* `prototypes`: which reference patches belong to which prototype, the similarity map of each prototype, and the
+  combined map.
+
+## 6.7 Common problems
 
 | Message / symptom | Cause | Fix |
 |---|---|---|
@@ -70,7 +87,6 @@ python scripts/run_correspondence.py --config configs/correspondence/large.yaml 
 | `Calibration … was computed for model_size=…` | calibration of another backbone or resolution | run `STAGE=calibrate` for this setting |
 | `debias.mode=… needs debias.calibration_path` | calibration missing | run `STAGE=calibrate` first |
 | `Episode i fingerprint mismatch on resume` | data, seed or code changed during a run | `--set run.resume=false` or a new `run.exp_name` |
-| `data.num_workers must be 0` | on purpose | worker processes would change the episodes |
 | `ModuleNotFoundError: CRF` | optional package not built | use bilinear, or `./setup_server.sh --with-crf` |
 | very slow, GPU idle | CPU clustering is the bottleneck | do not oversubscribe the CPU (`OMP_NUM_THREADS`) |
 | `verify_upstream.py` FAILED | an official file was edited | restore it from the official repository |

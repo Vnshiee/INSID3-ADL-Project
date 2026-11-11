@@ -131,7 +131,10 @@ def sinkhorn_plan_one_region(s: torch.Tensor, weights: torch.Tensor, epsilon: fl
 
 def unbalanced_sinkhorn_plan(sims: torch.Tensor, labels: torch.Tensor, K: int, weights: torch.Tensor,
                              epsilon: float = 0.05, rho: float = 0.5, iters: int = 50) -> torch.Tensor:
-    """Transport plans of all clusters, written into one (P, M) tensor (row i = patch i)."""
+    """Transport plans of all clusters, written into one (P, M) tensor (row i = patch i).
+
+    Not needed for the score itself; the tests use it to check the plan (row sums, limits of rho).
+    """
     plan = torch.zeros(sims.shape, device=sims.device, dtype=torch.float32)
     for k in range(K):
         in_cluster = labels == k

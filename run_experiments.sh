@@ -265,7 +265,7 @@ consistency)
 report)
   "$PY" scripts/select_best.py --root "$OUT2" --out-dir configs/selected_rev --min-episodes 4000
   report "$OUT2" results/round2
-  cp configs/selected_rev/selection_report.md results/round2/revision_selection_report.md
+  cp configs/selected_rev/selection_report.md results/round2/selection_report.md
   for t in sel_task1 sel_task2; do for f in 0 1 2 3; do
     "$PY" scripts/analyze_failures.py --a "$OUT2/baseline/pascal_part/fold${f}_shot5_seed0" \
         --b "$OUT2/$t/pascal_part/fold${f}_shot5_seed0" --out results/round2/fail_${t}_5shot_pascal_f$f

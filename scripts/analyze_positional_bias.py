@@ -1,4 +1,4 @@
-"""Direct measurement of positional bias left by each debiasing mode (review revision).
+"""Direct measurement of positional bias left by each debiasing mode (round 2).
 
 Segmentation mIoU mixes many effects. This script isolates what Task 1 is supposed to change:
 for pairs of unrelated natural images (A, B) it measures, after each debiasing mode,

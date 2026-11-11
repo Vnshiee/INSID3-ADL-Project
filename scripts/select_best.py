@@ -22,7 +22,7 @@ from _bootstrap import ROOT
 
 
 def _runs(root, shots=1, min_episodes=0):
-    """Complete tuning runs, averaged over seeds per exp_name (revision: multi-seed tuning)."""
+    """Complete tuning runs, averaged over seeds per exp_name (if a setting was run with several seeds)."""
     per_exp = {}
     for f in glob.glob(os.path.join(root, "*", "coco-tune", "*", "metrics.json")):
         with open(f) as fp:
@@ -95,7 +95,7 @@ def main() -> None:
                 "run": {"exp_name": "sel_task2"}},
                f"best Task-2 tune run: {t2[0]['exp_name']} ({t2[0]['miou']:.2f})")
     if cb and t1 and t2:
-        # Revision: the combined stage's own winner decides (previously ignored).
+        # The combined stage's own winner decides.
         c = cb[0]["config"]
         _write(os.path.join(args.out_dir, "combined.yaml"),
                {"_base_": base_rel, "debias": c["debias"], "prototypes": c["prototypes"],

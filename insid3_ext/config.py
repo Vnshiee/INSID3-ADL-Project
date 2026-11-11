@@ -118,8 +118,6 @@ class DataConfig:
     shots: int = 1                      # official main setting: 1-shot
     split: str = "test"                 # test = official episodes | tune = COCO train2014 episodes (model selection)
     tune_episodes: int = 1000           # round 1 used 1000; round 2 uses 4000 (1000 is too noisy, PFENet Tab. 10)
-    num_workers: int = 0                # must stay 0: the official datasets draw episodes from the global
-                                        # numpy random generator; worker processes would change them
 
 
 @dataclass
@@ -342,9 +340,6 @@ def validate(cfg: ExperimentConfig) -> None:
     if data.dataset in DATASET_FOLDS and data.split == "test":
         _check(0 <= data.fold < DATASET_FOLDS[data.dataset],
                f"data.fold for {data.dataset} must be in [0, {DATASET_FOLDS[data.dataset] - 1}]")
-    _check(data.num_workers == 0,
-           "data.num_workers must be 0: the official datasets sample episodes from the global numpy RNG, "
-           "and worker processes would change the episode sequence")
 
     _check(run.save_predictions >= 0, "run.save_predictions must be >= 0")
     _check(run.max_episodes is None or run.max_episodes >= 1, "run.max_episodes must be >= 1 or null")

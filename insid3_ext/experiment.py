@@ -3,9 +3,10 @@
 Protocol fidelity
 -----------------
 * Same seeding as the official scripts, then model construction, then the dataset.
-* Episodes are fetched sequentially with ``ds[idx]`` (equivalent to the official
-  ``DataLoader(batch_size=1, shuffle=False, num_workers=0, collate_fn=lambda x: x[0])``),
-  so the global-numpy-RNG episode sequence is identical to the official one.
+* Episodes are fetched one after another with ``ds[idx]``, in this process. This is what the official
+  ``DataLoader(batch_size=1, shuffle=False, num_workers=0, collate_fn=lambda x: x[0])`` does, so the
+  global-numpy-RNG episode sequence is identical to the official one. (Worker processes would each have
+  their own copy of the random generator and change the episodes, so we never use them.)
 * Prediction at ``image_size`` resolution, GT resized with nearest interpolation, IoU via
   the official ``Evaluator`` / ``AverageMeter`` (class-wise mIoU and FB-IoU).
 * None of our modules touch the global RNGs, so every method sees *the same episodes*;

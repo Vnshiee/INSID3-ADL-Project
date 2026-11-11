@@ -153,7 +153,7 @@ DINOv3 and a planted positional pattern.
 |---|---|
 | our basis = official basis (bit-identical) | `test_baseline_equivalence.py::test_positional_basis_identical` |
 | everything off → official predictions and keypoints | `test_predict_mask_identical_extensions_off`, `test_keypoint_matching_identical` |
-| Task-2 code with M = 1 → official (1 shot); pooled M = 1 → official (any shots) | `test_task2_path_m1_reproduces_baseline_1shot`, `test_revision.py::test_pooled_m1_pipeline_reproduces_official_multishot` |
+| Task-2 code with M = 1 → official (1 shot); pooled M = 1 → official (any shots) | `test_task2_path_m1_reproduces_baseline_1shot`, `test_round2.py::test_pooled_m1_pipeline_reproduces_official_multishot` |
 | diagnostics path → official predictions | `test_full_diagnostics_path_is_identical` |
 | simplifying the code changed no number | `test_golden.py`: 186 stored outputs of every mode, made with the earlier code version |
 | formulas behave as derived (limits, bounds, orderings) | `test_debiasing.py`, `test_matching.py`, `test_calibration.py`, `test_prototypes.py` |

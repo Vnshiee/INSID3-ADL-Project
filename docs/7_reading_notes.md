@@ -128,7 +128,7 @@ the others by the sections that matter here). Each pass ends with **what it mean
 **What it means for us**
 1. Our negative 1-shot Task-2 result **agrees with ASGNet**. Report it as consistent with the literature,
    not as a failure of implementation.
-2. Two literature-backed variants are now in the revision plan: area-adaptive prototype count
+2. Two literature-backed variants were added in round 2: area-adaptive prototype count
    (`min_points_per_prototype=100`, `num_prototypes=5`) and pooled multi-shot clustering for 5-shot.
 
 ---
@@ -159,7 +159,7 @@ the others by the sections that matter here). Each pass ends with **what it mean
 
 ---
 
-## Questions the revision runs answer, linked to the reading
+## Questions the round-2 runs answer, linked to the reading
 
 | Question | Reading | Stage / output |
 |---|---|---|

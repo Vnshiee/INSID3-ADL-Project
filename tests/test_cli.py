@@ -99,3 +99,26 @@ def test_verify_upstream_script():
 def test_shell_scripts_parse():
     for f in glob.glob(os.path.join(ROOT, "*.sh")):
         assert subprocess.run(["bash", "-n", f]).returncode == 0, f
+
+
+
+def test_model_figures(patched, monkeypatch):
+    """visualize.py similarity / prototypes run end to end (fake encoder, CPU)."""
+    import numpy as np
+    from PIL import Image
+    rng = np.random.default_rng(0)
+    for name in ("r.jpg", "t.jpg"):
+        Image.fromarray(rng.integers(0, 255, (96, 128, 3), dtype=np.uint8)).save(patched / name)
+    mask = np.zeros((96, 128), dtype=np.uint8)
+    mask[20:70, 30:100] = 255
+    Image.fromarray(mask).save(patched / "m.png")
+    cfg = patched / "c.yaml"           # Task-2 config at the fake encoder's size
+    cfg.write_text("_base_: " + os.path.join(ROOT, "configs", "task2", "max.yaml") + "\n"
+                   "model: {device: cpu, image_size: 128, svd_components: 8}\n")
+    images = ["--ref-image", str(patched / "r.jpg"), "--ref-mask", str(patched / "m.png"),
+              "--target", str(patched / "t.jpg")]
+    _run("visualize.py", ["similarity", "--configs", str(cfg), *images, "--out", str(patched / "sim.png")],
+         monkeypatch)
+    _run("visualize.py", ["prototypes", "--config", str(cfg), *images, "--out", str(patched / "protos.png")],
+         monkeypatch)
+    assert (patched / "sim.png").exists() and (patched / "protos.png").exists()

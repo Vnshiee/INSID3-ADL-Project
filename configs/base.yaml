@@ -22,7 +22,6 @@ data:
   fold: 0
   shots: 1
   split: test
-  num_workers: 0
 run:
   output_root: ${env:INSID3_OUTPUT_ROOT,outputs}
   exp_name: base

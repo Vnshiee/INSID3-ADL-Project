@@ -14,7 +14,7 @@ INSID3 and replaces only the methods we need to change:
 
 When nothing is switched on (debias.mode = hard, prototypes.enabled = false) the official methods run
 themselves, so the baseline is exactly INSID3. Tests prove the equivalences:
-tests/test_baseline_equivalence.py and tests/test_revision.py.
+tests/test_baseline_equivalence.py and tests/test_round2.py.
 
 Shapes inside predict_mask (S shots, C channels, h x w patches, P = h*w)
   imgs            (1, S+1, 3, H, W)   the S reference images and the target

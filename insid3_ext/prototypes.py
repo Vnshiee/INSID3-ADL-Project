@@ -48,7 +48,8 @@ class PrototypeSet:
 
     prototypes        (M, C) unit-length prototypes (debiased space)
     weights           (M,)   their weights, summing to 1
-    shot_index        (M,)   which shot each one came from (-1 = global prototype, -2 = pooled)
+    shot_index        (M,)   which shot each one came from (-1 = global prototype, -2 = pooled);
+                             only for checking (the tests use it to verify the shot weights)
     global_prototype  (C,)   the ORIGINAL single INSID3 prototype, always computed alongside
     """
     prototypes: torch.Tensor

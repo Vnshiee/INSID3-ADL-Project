@@ -22,7 +22,7 @@ def test_defaults_are_official():
     assert (cfg.model.model_size, cfg.model.image_size, cfg.model.svd_components) == ("large", 1024, 500)
     assert (cfg.model.tau, cfg.model.merge_threshold) == (0.6, 0.2)
     assert cfg.debias.mode == "hard" and not cfg.prototypes.enabled
-    assert cfg.data.num_workers == 0 and cfg.run.seed == 0
+    assert cfg.run.seed == 0
 
 
 def test_overrides_and_types():
@@ -39,7 +39,7 @@ def test_env_expansion(monkeypatch):
 
 @pytest.mark.parametrize("bad", [
     ["debias.mode=soft"], ["debias.alpha=1.5"], ["model.image_size=1000"], ["data.fold=4"],
-    ["data.num_workers=2"], ["prototypes.token_aggregation=mean"], ["prototypes.num_prototypes=0"],
+    ["prototypes.token_aggregation=mean"], ["prototypes.num_prototypes=0"],
     ["data.split=tune", "data.dataset=lvis"], ["debias.mode=calibrated", "debias.calibration_path=null"],
     ["model.tau=1.0"], ["prototypes.ot_rho=0"],
 ])

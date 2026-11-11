@@ -1,4 +1,4 @@
-"""Tests for the review revision: control debias modes, pooled multi-shot, diagnostics path,
+"""Tests for round 2: control debias modes, pooled multi-shot, diagnostics path,
 score calibration, covariance calibration, correspondence bootstrap, positional-bias analysis."""
 
 import copy
