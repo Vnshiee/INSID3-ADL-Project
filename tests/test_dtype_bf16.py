@@ -1,6 +1,6 @@
 """Dtype robustness of the NEW modules with bf16 inputs.
 
-Finding (recorded in docs/REPOSITORY_AUDIT.md §5): the *official* pipeline cannot run on bf16
+Finding (see docs/3_code_walkthrough.md): the *official* pipeline cannot run on bf16
 features — ``utils.clustering.agglomerative_clustering`` calls ``.numpy()``, which rejects bf16.
 Because the official code runs on CUDA under bf16 autocast, the DINOv3 output it receives must be
 fp32 (the final LayerNorm runs in fp32 under autocast). Hence the full pipeline is not tested in

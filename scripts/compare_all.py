@@ -4,7 +4,7 @@ For each (experiment, dataset, split, shots, seed) that has the same set of fold
 reference, runs the fold-stratified paired bootstrap of compare_runs.py and writes
 <out>.json and a Markdown table <out>.md.
 
-    python scripts/compare_all.py --root $INSID3_OUTPUT_ROOT --reference baseline --out results/comparisons
+    python scripts/compare_all.py --root $INSID3_OUTPUT_ROOT --reference baseline --out results/round1/comparisons
 """
 import argparse
 import glob

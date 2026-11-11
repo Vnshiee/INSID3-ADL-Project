@@ -1,0 +1,10 @@
+{
+  "episodes": 1000,
+  "miou_ref": 54.887855529785156,
+  "miou_new": 54.85819625854492,
+  "miou_diff": -0.029659271240234375,
+  "identical_fraction": 0.346,
+  "max_abs_iou_diff": 0.89006108045578,
+  "rule": "|dmIoU| <= 0.05 and identical >= 0.98",
+  "verdict": "FAIL"
+}

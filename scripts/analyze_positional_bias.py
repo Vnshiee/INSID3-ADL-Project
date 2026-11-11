@@ -17,7 +17,7 @@ excluded automatically.
 
     python scripts/analyze_positional_bias.py --config configs/base.yaml \
         --image-dir $INSID3_DATA_ROOT/COCO2014/train2014 --calibration $INSID3_CALIBRATION_PATH \
-        --pairs 100 --out results/positional_bias \
+        --pairs 100 --out results/round2/positional_bias \
         --variant hard: --variant none:debias.mode=none \
         --variant hard_s20:model.svd_components=20 \
         --variant spectral_k500_g4:debias.mode=spectral,debias.knee_rank=500,debias.sharpness=4 \

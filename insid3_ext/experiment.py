@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import os
 import statistics
 import sys
@@ -49,8 +50,10 @@ def run_dir(cfg: ExperimentConfig, task: str = "seg") -> str:
 
 
 def _tensor_digest(t: torch.Tensor) -> str:
-    a = (t > 0).cpu().numpy().astype(np.uint8)
-    return hashlib.sha1(np.packbits(a).tobytes() + str(a.shape).encode()).hexdigest()[:12]
+    """A short hash of a binary mask: equal masks give equal hashes."""
+    a = (t > 0).cpu().numpy().astype(np.uint8)             # the mask as 0/1
+    data = np.packbits(a).tobytes() + str(a.shape).encode()  # its bits and its shape, as bytes
+    return hashlib.sha1(data).hexdigest()[:12]              # first 12 hex characters are enough
 
 
 def episode_fingerprint(batch: Dict[str, Any]) -> str:
@@ -180,11 +183,11 @@ def run_segmentation(cfg: ExperimentConfig, model: Optional[torch.nn.Module] = N
                    "fg_iou": float(inter[1] / max(float(union[1]), 1.0)),
                    "time_ms": t.ms, "peak_mem_mb": peak_memory_mb(device),
                    "pred_area": int(pred_mask.sum()), "gt_area": int(tgt_mask.sum())}
-            diag = getattr(model, "last_diagnostics", None) or {}
-            rec.update({k: v for k, v in diag.items()})
-            dstats = getattr(getattr(model, "debiaser", None), "last_stats", None)
-            if dstats:
-                rec["debias_stats"] = dstats
+            # Extra numbers logged by our model (INSID3Ext); the plain official model has none.
+            if hasattr(model, "last_diagnostics"):
+                rec.update(model.last_diagnostics)                   # candidates, seed, scores, ...
+            if hasattr(model, "debiaser") and model.debiaser.last_stats:
+                rec["debias_stats"] = model.debiaser.last_stats     # mean lambda / gamma of this episode
             fp.write(json.dumps(rec) + "\n")
             fp.flush()
             done[idx] = rec
@@ -198,7 +201,8 @@ def run_segmentation(cfg: ExperimentConfig, model: Optional[torch.nn.Module] = N
     records = [done[i] for i in sorted(done) if i < n_total]
     metrics = compute_seg_metrics(records, ds.class_ids, cfg.data.dataset)
     times = [r["time_ms"] for r in records]
-    mems = [r["peak_mem_mb"] for r in records if r["peak_mem_mb"] == r["peak_mem_mb"]]
+    # peak_mem_mb is NaN on the CPU (no GPU memory to measure); leave those out
+    mems = [r["peak_mem_mb"] for r in records if not math.isnan(r["peak_mem_mb"])]
     metrics.update({
         "task": "segmentation", "exp_name": cfg.run.exp_name, "dataset": cfg.data.dataset,
         "split": cfg.data.split, "fold": cfg.data.fold, "shots": cfg.data.shots, "seed": cfg.run.seed,

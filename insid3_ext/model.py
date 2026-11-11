@@ -38,7 +38,7 @@ from utils.data import downsample_mask
 
 from .config import DebiasConfig, PrototypeConfig, needs_calibration
 from .debiasing import PositionalDebiaser, estimate_positional_svd, load_calibration
-from .matching import aggregate_similarities, region_scores_chamfer, region_scores_ot, segment_mean
+from .matching import aggregate_similarities, mean_per_cluster, region_scores_chamfer, region_scores_ot
 from .prototypes import build_reference_prototypes
 
 
@@ -293,7 +293,7 @@ class INSID3Ext(INSID3):
         #         idx = (cluster_labels == k)
         #         cross_sim[k] = fg_sim[idx].mean() if idx.any() else 0.0
         # OURS ('prototype'): seed = cluster prototype vs the prototype SET (aggregated), cross = mean of our
-        # patch score per cluster (segment_mean = the same loop, done for all clusters at once).
+        # patch score per cluster (mean_per_cluster = the same loop as the official code).
         if cfg.region_matching == "prototype":
             cp = cluster_protos.float()
             if cfg.token_aggregation == "single":
@@ -302,7 +302,7 @@ class INSID3Ext(INSID3):
                 proto_sims = cp @ pset.prototypes.T.float()                  # (K, M)
                 seed = aggregate_similarities(proto_sims, pset.weights, cfg.token_aggregation,
                                               cfg.lse_temperature)
-            cross = segment_mean(token_score, labels, K)
+            cross = mean_per_cluster(token_score, labels, K)
             return seed, cross
         if cfg.region_matching == "chamfer":
             r = region_scores_chamfer(token_sims, labels, K, pset.weights)

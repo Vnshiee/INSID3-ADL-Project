@@ -37,7 +37,7 @@ def resolve_weights_path(model_size: str, weights_path: Optional[str] = None) ->
         raise FileNotFoundError(
             f"DINOv3 weights not found at '{path}'. Obtain them from "
             f"https://github.com/facebookresearch/dinov3 (licence form), then set "
-            f"INSID3_PRETRAIN_DIR or model.weights_path. See docs/SERVER_SETUP.md.")
+            f"INSID3_PRETRAIN_DIR or model.weights_path. See docs/6_setup_and_running.md.")
     return path
 
 

@@ -34,7 +34,7 @@ The modes only differ in HOW lambda is chosen. There are four kinds of operation
   kind "token"     mode token          subtract the average positional pattern at each patch position
 
 "static" means lambda is a fixed vector, the same for every image and every patch.
-The formulas are derived in docs/MATHEMATICAL_FORMULATION.md section 2.
+The formulas are derived in docs/2_method.md section 2.1.
 
 TENSOR SHAPES used below
   fmaps   (B, T, C, h, w)   B episodes, T images per episode, C channels, h x w patches
@@ -329,7 +329,7 @@ class PositionalDebiaser:
 
         # All other kinds work with the coordinates c = U^T x of every patch.
         U = self.U.to(device=X.device, dtype=X.dtype)                 # (C, r)
-        coeff = torch.einsum('cr,ncp->nrp', U, X)                     # (N, r, P)
+        coeff = U.T @ X                                               # (N, r, P): c = U^T x for every patch
 
         if self.kind == "static":
             # The same lambda for every image and patch: remove lambda_k * c_k along each direction.
@@ -359,7 +359,7 @@ class PositionalDebiaser:
             else:
                 # Subtract it as strongly as this patch actually shows it (least squares fit):
                 # gamma_p = <c_p, pattern_p> / |pattern_p|^2, limited to [0, max_gain].
-                num = torch.einsum('nrp,rp->np', coeff.float(), pattern)          # (N, P)
+                num = (coeff.float() * pattern).sum(dim=1)                        # (N, P): <c_p, pattern_p>
                 den = pattern.pow(2).sum(dim=0).clamp_min(1e-12)                  # (P,)
                 gamma = (self.strength * num / den[None]).clamp(0.0, self.max_gain)
             removed = pattern.to(X.dtype)[None] * gamma.to(X.dtype)[:, None, :]  # (N, r, P)
@@ -369,7 +369,7 @@ class PositionalDebiaser:
             raise ValueError(f"Unknown debiaser kind: {self.kind}")
 
         # Go back from coordinates to feature space and subtract: x - U * removed.
-        X_deb = X - torch.einsum('cr,nrp->ncp', U, removed)           # (N, C, P)
+        X_deb = X - U @ removed                                       # (N, C, P): x - U * removed
         X_deb = X_deb.reshape(B, T, C, H, W)
         # Rescale to unit length, as the official method does after its projection.
         return F.normalize(X_deb, p=2, dim=2) if normalize else X_deb

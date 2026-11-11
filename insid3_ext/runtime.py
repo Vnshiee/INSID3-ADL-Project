@@ -22,7 +22,7 @@ def resolve_device(requested: str) -> str:
                 "model.device is 'cuda' but torch.cuda.is_available() is False.\n"
                 f"  torch={torch.__version__}, built with CUDA={torch.version.cuda}\n"
                 "  Check `nvidia-smi`, the driver/CUDA compatibility and that a CUDA build of "
-                "PyTorch is installed (see docs/SERVER_SETUP.md). For a CPU smoke test pass "
+                "PyTorch is installed (see docs/6_setup_and_running.md). For a CPU smoke test pass "
                 "--set model.device=cpu (very slow at 1024 px).")
         idx = int(requested.split(":")[1]) if ":" in requested else 0
         if idx >= torch.cuda.device_count():

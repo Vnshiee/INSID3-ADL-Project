@@ -1,5 +1,5 @@
 # SPair-71k with the segmentation backbone/resolution (ViT-L, 1024 px, s = 500).
-# The resolution used for paper Tab. 2 is not stated in the paper; see docs/REPOSITORY_AUDIT.md.
+# The resolution used for paper Tab. 2 is not stated in the paper; see docs/1_background.md (D9).
 _base_: ../base.yaml
 data: {dataset: spair}
 correspondence: {debiased: true, split: test}

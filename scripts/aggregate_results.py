@@ -3,7 +3,7 @@
 Fold-averaged rows are only marked complete if every expected fold finished all
 episodes; incomplete runs are listed with a warning, never silently averaged.
 
-    python scripts/aggregate_results.py --root $INSID3_OUTPUT_ROOT --out results/summary
+    python scripts/aggregate_results.py --root $INSID3_OUTPUT_ROOT --out results/round1/summary
 """
 import argparse
 import csv

@@ -88,7 +88,7 @@ class PositionalStatsAccumulator:
         X = feats.reshape(N, C, h * w).float().to(self.U.device)      # (N, C, P)
 
         # Coordinates of every patch along every direction.
-        coeff = torch.einsum('cr,ncp->nrp', self.U, X)                # (N, R, P)
+        coeff = self.U.T @ X                                          # (N, R, P): c = U^T x
         self.sum_c += coeff.sum(0).double()
         self.sum_c2 += coeff.pow(2).sum(0).double()
 

@@ -40,35 +40,46 @@ def _fold_arrays(ra, rb):
     return cls, ia, ua, ib, ub
 
 
-def _miou(counts, onehot, inter, union):
-    """counts (B, E) resample multiplicities → (B,) class-wise mIoU (official formula)."""
-    I = counts @ (onehot * inter[:, None])
-    U = counts @ (onehot * union[:, None])
-    present = (counts @ onehot) > 0
-    iou = I / np.maximum(U, 1.0)
-    return 100.0 * (iou * present).sum(1) / np.maximum(present.sum(1), 1)
+def _class_miou(cls, inter, union):
+    """Official class-wise mIoU (utils/metrics.py AverageMeter) of a set of episodes.
+
+    For every class: total intersection / total union over its episodes; then the mean over classes.
+    cls, inter, union: one entry per episode (foreground only).
+    """
+    ious = []
+    for c in np.unique(cls):
+        of_class = cls == c
+        ious.append(inter[of_class].sum() / max(union[of_class].sum(), 1.0))
+    return 100.0 * float(np.mean(ious))
 
 
 def compare_segmentation(a_dirs, b_dirs, n_boot, seed):
+    """Paired, fold-stratified bootstrap of the mIoU difference B - A.
+
+    One resample = for every fold, draw that fold's episodes WITH replacement (same draw for A and B),
+    compute both mIoUs, take the mean over folds (= the dataset mIoU), and store B - A.
+    """
     rng = np.random.default_rng(seed)
-    point_a, point_b, boots = [], [], []
-    for da, db in zip(a_dirs, b_dirs):
-        cls, ia, ua, ib, ub = _fold_arrays(_load(da), _load(db))
-        classes, inv = np.unique(cls, return_inverse=True)
-        onehot = np.eye(len(classes))[inv]
-        E = len(cls)
-        ones = np.ones((1, E))
-        point_a.append(_miou(ones, onehot, ia, ua)[0])
-        point_b.append(_miou(ones, onehot, ib, ub)[0])
-        idx = rng.integers(0, E, size=(n_boot, E))
-        counts = np.zeros((n_boot, E))
-        np.add.at(counts, (np.arange(n_boot)[:, None], idx), 1)
-        boots.append(_miou(counts, onehot, ib, ub) - _miou(counts, onehot, ia, ua))
-    delta = np.mean(boots, axis=0)
-    return {"miou_a": float(np.mean(point_a)), "miou_b": float(np.mean(point_b)),
-            "delta": float(np.mean(point_b) - np.mean(point_a)),
-            "ci95": [float(np.percentile(delta, 2.5)), float(np.percentile(delta, 97.5))],
-            "p_two_sided": float(min(1.0, 2 * min((delta <= 0).mean(), (delta >= 0).mean()))),
+    folds = [_fold_arrays(_load(da), _load(db)) for da, db in zip(a_dirs, b_dirs)]
+
+    # The real (not resampled) numbers.
+    miou_a = np.mean([_class_miou(cls, ia, ua) for cls, ia, ua, ib, ub in folds])
+    miou_b = np.mean([_class_miou(cls, ib, ub) for cls, ia, ua, ib, ub in folds])
+
+    # Resampled differences. Draw order (fold by fold, n_boot draws each) is fixed by the seed.
+    draws = [[rng.integers(0, len(f[0]), size=len(f[0])) for _ in range(n_boot)] for f in folds]
+    deltas = np.zeros(n_boot)
+    for i in range(n_boot):
+        diff_per_fold = []
+        for (cls, ia, ua, ib, ub), fold_draws in zip(folds, draws):
+            idx = fold_draws[i]                       # the same episodes for A and B: that is "paired"
+            diff_per_fold.append(_class_miou(cls[idx], ib[idx], ub[idx]) - _class_miou(cls[idx], ia[idx], ua[idx]))
+        deltas[i] = np.mean(diff_per_fold)
+
+    return {"miou_a": float(miou_a), "miou_b": float(miou_b), "delta": float(miou_b - miou_a),
+            "ci95": [float(np.percentile(deltas, 2.5)), float(np.percentile(deltas, 97.5))],
+            # two-sided p: how often the resampled difference lies on the other side of 0 (x 2)
+            "p_two_sided": float(min(1.0, 2 * min((deltas <= 0).mean(), (deltas >= 0).mean()))),
             "n_folds": len(a_dirs)}
 
 
@@ -80,12 +91,12 @@ def compare_correspondence(da, db, n_boot, seed, alpha=0.1):
         d = np.array(r["dist"])
         return float((d <= alpha * r["pck_thresh"]).mean())
     diff = np.array([pck(rb[i]) - pck(ra[i]) for i in common])
+    # Bootstrap: draw the image pairs with replacement, average the PCK difference, repeat n_boot times.
     rng = np.random.default_rng(seed)
-    chunks = []                                   # chunked: avoids an (n_boot x n_pairs) index array
-    for start in range(0, n_boot, 250):
-        b = min(250, n_boot - start)
-        chunks.append(diff[rng.integers(0, len(diff), size=(b, len(diff)))].mean(1) * 100)
-    boots = np.concatenate(chunks)
+    boots = np.zeros(n_boot)
+    for i in range(n_boot):
+        idx = rng.integers(0, len(diff), size=len(diff))
+        boots[i] = diff[idx].mean() * 100
     pa = float(np.mean([pck(ra[i]) for i in common]) * 100)
     pb = float(np.mean([pck(rb[i]) for i in common]) * 100)
     return {"alpha": alpha, "pck_a": pa, "pck_b": pb, "delta_pck": float(diff.mean() * 100),

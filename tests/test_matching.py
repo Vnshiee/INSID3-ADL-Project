@@ -1,10 +1,10 @@
-"""Task 2: similarity aggregation, segment reductions, Chamfer and unbalanced OT."""
+"""Task 2: similarity aggregation, per-cluster mean, Chamfer and unbalanced OT."""
 
 import pytest
 import torch
 
-from insid3_ext.matching import (aggregate_similarities, region_scores_chamfer, region_scores_ot,
-                                 segment_amax, segment_logsumexp, segment_mean, unbalanced_sinkhorn_plan)
+from insid3_ext.matching import (aggregate_similarities, mean_per_cluster, region_scores_chamfer, region_scores_ot,
+                                 unbalanced_sinkhorn_plan)
 
 
 @pytest.fixture
@@ -17,21 +17,20 @@ def data():
     return sims, labels, w
 
 
-def test_segment_ops_match_loops(data):
+def test_mean_per_cluster(data):
     sims, labels, _ = data
+    m = mean_per_cluster(sims[:, 0], labels, 5)
     for k in range(5):
-        idx = labels == k
-        assert torch.allclose(segment_mean(sims[:, 0], labels, 5)[k], sims[idx, 0].mean(), atol=1e-6)
-        assert torch.allclose(segment_amax(sims, labels, 5)[k], sims[idx].max(0).values)
-        assert torch.allclose(segment_logsumexp(sims, labels, 5)[k], torch.logsumexp(sims[idx], 0), atol=1e-5)
+        assert torch.allclose(m[k], sims[labels == k, 0].mean(), atol=1e-6)
 
 
-def test_segment_empty_cluster():
+def test_empty_cluster_scores_zero():
     v = torch.ones(3, 2)
-    lab = torch.tensor([0, 0, 2])
-    assert segment_mean(v[:, 0], lab, 3)[1] == 0
-    assert torch.isinf(segment_amax(v, lab, 3)[1]).all()
-    assert torch.isinf(segment_logsumexp(v, lab, 3)[1]).all()
+    lab = torch.tensor([0, 0, 2])                      # cluster 1 is empty
+    w = torch.tensor([0.5, 0.5])
+    assert mean_per_cluster(v[:, 0], lab, 3)[1] == 0
+    assert region_scores_chamfer(v, lab, 3, w)[1] == 0
+    assert region_scores_ot(v, lab, 3, w)[1] == 0
 
 
 def test_aggregation_ordering(data):
@@ -83,7 +82,7 @@ def test_ot_rho_to_zero_is_softmax_assignment(data):
     r = region_scores_ot(sims, labels, 5, w, eps, 1e-8, 20)
     p = torch.softmax(torch.log(w)[None] + sims / eps, dim=1)
     per_tok = (p * sims).sum(1)
-    expected = segment_mean(per_tok, labels, 5)
+    expected = mean_per_cluster(per_tok, labels, 5)
     assert torch.allclose(r, expected, atol=1e-4)
 
 

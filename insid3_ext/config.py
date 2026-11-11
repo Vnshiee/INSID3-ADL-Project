@@ -35,8 +35,8 @@ class ConfigError(ValueError):
 # ───────────────────────────── dataclasses ─────────────────────────────
 
 # Every default below either (1) copies the official INSID3 value (paper Tab. 6 / opts.py), or
-# (2) is a STARTING value for one of our new options that the tuning sweeps (run_task1.sh,
-# run_task2.sh, run_revision.sh) vary; the value finally used is chosen on the COCO tuning split only.
+# (2) is a STARTING value for one of our new options that the tuning sweeps (run_experiments.sh) vary;
+# the value finally used is chosen on the COCO tuning split only.
 # The comment on each line says which of the two it is and why.
 
 @dataclass
@@ -59,7 +59,7 @@ class ModelConfig:
 
 @dataclass
 class DebiasConfig:
-    """Task 1 (insid3_ext/debiasing.py). Formulas: docs/MATHEMATICAL_FORMULATION.md section 2."""
+    """Task 1 (insid3_ext/debiasing.py). Formulas: docs/2_method.md section 2.1."""
     mode: str = "hard"                  # official default. Our modes: none | weighted | spectral | calibrated
                                         # | image | token; controls: random | pca | rho_threshold
     rank: Optional[int] = None          # how many directions to act on; None = the mode's natural choice
@@ -84,7 +84,7 @@ class DebiasConfig:
 
 @dataclass
 class PrototypeConfig:
-    """Task 2 (insid3_ext/prototypes.py, matching.py). Formulas: docs/MATHEMATICAL_FORMULATION.md section 3."""
+    """Task 2 (insid3_ext/prototypes.py, matching.py). Formulas: docs/2_method.md section 2.2."""
     enabled: bool = False               # False = official single prototype
     num_prototypes: int = 4             # M: starting value; swept 1..8 (ASGNet found ~5 best, with training)
     clustering: str = "kmeans"          # kmeans (fixed M) | agglomerative (M from the data, like INSID3's own clustering)
@@ -168,13 +168,19 @@ REGION_MATCHINGS = ("prototype", "chamfer", "ot")
 
 # ───────────────────────────── loading ─────────────────────────────
 
+# Pattern of "${env:VAR}" or "${env:VAR,default}" inside a string:
+#   group 1 = VAR (a variable name), group 2 = default (everything after the comma, may be missing)
 _ENV_RE = re.compile(r"\$\{env:([A-Za-z_][A-Za-z0-9_]*)(?:,([^}]*))?\}")
 
 
 def _expand_env(value: Any) -> Any:
-    """Recursively expand ``${env:VAR,default}`` in strings."""
+    """Replace every ``${env:VAR,default}`` by the value of the environment variable VAR (or the default).
+
+    Works on a string, or on every string inside nested dicts / lists (the loaded YAML).
+    Example: "${env:INSID3_DATA_ROOT,data}/COCO2014" -> "/home/me/data/COCO2014" if INSID3_DATA_ROOT is set.
+    """
     if isinstance(value, str):
-        def repl(m: re.Match) -> str:
+        def repl(m: re.Match) -> str:                   # called once for every match in the string
             var, default = m.group(1), m.group(2)
             if var in os.environ:
                 return os.environ[var]

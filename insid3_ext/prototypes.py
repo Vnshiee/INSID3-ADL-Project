@@ -101,20 +101,24 @@ def spherical_kmeans(X: torch.Tensor, k: int, iters: int = 50,
     C = torch.stack(centers)                                     # (k, C)
 
     # --- Lloyd iterations: assign each point to its most similar centre, recompute centres.
-    labels = torch.zeros(N, dtype=torch.long, device=X.device)
     prev = None
     for _ in range(iters):
         sim = Xf @ C.T                                           # (N, k) cosine to every centre
-        best, labels = sim.max(dim=1)
-        counts = torch.bincount(labels, minlength=k)
-        sums = torch.zeros_like(C).index_add_(0, labels, Xf * wt[:, None])
-        # An empty group would have no centre: give it the point that fits its own centre worst.
-        for j in torch.nonzero(counts == 0).flatten().tolist():
-            worst = int(torch.argmin(best).item())
-            sums[j] = Xf[worst]
-            labels[worst] = j
-            best[worst] = 1.0
-        C = F.normalize(sums, p=2, dim=1)                        # new centres, unit length
+        best, labels = sim.max(dim=1)                            # best centre of every point
+        assigned = labels.clone()                                # groups as assigned in THIS iteration
+        new_centers = []
+        for j in range(k):
+            members = assigned == j
+            if members.any():
+                # weighted sum of the group's points (normalised below = spherical k-means centre)
+                new_centers.append((Xf[members] * wt[members, None]).sum(dim=0))
+            else:
+                # An empty group would have no centre: give it the point that fits its own centre worst.
+                worst = int(torch.argmin(best).item())
+                new_centers.append(Xf[worst])
+                labels[worst] = j
+                best[worst] = 1.0
+        C = F.normalize(torch.stack(new_centers), p=2, dim=1)    # new centres, unit length
         obj = float((best * wt).sum() / wt.sum())
         if prev is not None and abs(obj - prev) < tol:           # stop when nothing improves any more
             break
@@ -150,7 +154,7 @@ def _group_tokens(Xc: torch.Tensor, cfg, generator: torch.Generator,
     # The number of groups comes out of the data; if it exceeds m_eff we keep the m_eff largest
     # groups and give every other patch to the most similar kept group.
     labels = agglomerative_clustering(F.normalize(Xc.float(), dim=1), cfg.ref_tau)
-    counts = torch.bincount(labels)
+    counts = torch.bincount(labels)                              # counts[j] = number of patches in group j
     if counts.numel() > m_eff:
         keep = torch.argsort(counts, descending=True)[:m_eff]
         cents = F.normalize(torch.stack([Xc[labels == k].float().mean(0) for k in keep.tolist()]), dim=1)
@@ -193,7 +197,7 @@ def build_reference_prototypes(feat_match: torch.Tensor, feat_group: torch.Tenso
     """
     S, C, h, w = feat_match.shape
     gen = torch.Generator(device="cpu").manual_seed(int(cfg.seed))  # own generator (see top of file)
-    if getattr(cfg, "multishot", "per_shot") == "pooled" and S > 1:
+    if cfg.multishot == "pooled" and S > 1:
         return _build_pooled(feat_match, feat_group, ref_masks, cfg, gen)
 
     protos: List[torch.Tensor] = []
@@ -209,9 +213,13 @@ def build_reference_prototypes(feat_match: torch.Tensor, feat_group: torch.Tenso
 
         labels = _group_tokens(Xg, cfg, gen).to(fg.device)
         M = int(labels.max().item()) + 1
-        counts = torch.bincount(labels, minlength=M).float()          # patches per group
-        # Sum of the debiased features per group, in fp32 for accuracy.
-        sums = torch.zeros(M, C, device=fg.device, dtype=torch.float32).index_add_(0, labels, fg.float())
+        # Per group: number of patches and the sum of their debiased features (fp32 for accuracy).
+        counts = torch.zeros(M, device=fg.device)
+        sums = torch.zeros(M, C, device=fg.device, dtype=torch.float32)
+        for j in range(M):
+            members = labels == j
+            counts[j] = members.sum()
+            sums[j] = fg[members].float().sum(dim=0)
 
         # Drop empty groups, and (optionally) groups smaller than min_cluster_fraction of the mask.
         keep = counts > 0
@@ -265,8 +273,13 @@ def _build_pooled(feat_match, feat_group, ref_masks, cfg, gen) -> PrototypeSet:
 
     labels = _group_tokens(Xg, cfg, gen, weights=Wt).to(Xm.device)
     M = int(labels.max().item()) + 1
-    mass = torch.zeros(M, device=Xm.device).index_add_(0, labels, Wt)                        # weight per group
-    sums = torch.zeros(M, C, device=Xm.device).index_add_(0, labels, Xm.float() * Wt[:, None])  # weighted sums
+    # Per group: its total patch weight ("mass") and the weighted sum of its features.
+    mass = torch.zeros(M, device=Xm.device)
+    sums = torch.zeros(M, C, device=Xm.device)
+    for j in range(M):
+        members = labels == j
+        mass[j] = Wt[members].sum()
+        sums[j] = (Xm[members].float() * Wt[members, None]).sum(dim=0)
 
     keep = mass > 0
     if cfg.min_cluster_fraction > 0 and int(keep.sum()) > 1:

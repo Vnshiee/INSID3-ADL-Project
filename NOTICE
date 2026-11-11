@@ -6,7 +6,7 @@ Copyright the INSID3 authors, licensed under the Apache License 2.0 (see LICENSE
 The only change to the upstream tree is that README.md was moved to upstream/UPSTREAM_README.md.
 upstream/UPSTREAM_MANIFEST.sha256 lists the checksums of all upstream files.
 
-Added files (insid3_ext/, scripts/, configs/, tests/, docs/ except docs/data.md, *.sh, NOTICE,
+Added files (insid3_ext/, scripts/, configs/, tests/, results/, docs/ except docs/data.md, *.sh, NOTICE,
 README.md, requirements-research.txt, requirements-tested-cpu.txt, environment.yml,
 env.example.sh) implement research extensions on top of the official code and are provided under the
 same Apache License 2.0.

@@ -68,7 +68,7 @@ def main() -> None:
     args = ap.parse_args()
     runs = _runs(args.root, args.shots, args.min_episodes)
     if not runs:
-        raise SystemExit("No complete tuning runs found (run run_task1.sh / run_task2.sh with STAGE=tune).")
+        raise SystemExit("No complete tuning runs found (STAGE=r1_tune or t1/t2 of run_experiments.sh).")
     os.makedirs(args.out_dir, exist_ok=True)
     base = [r for r in runs if r["exp_name"] == "baseline"]
     t1, t2, cb = _best(runs, "t1_"), _best(runs, "t2_"), _best(runs, "c_")
@@ -76,7 +76,7 @@ def main() -> None:
     if base:
         rep.append(f"Baseline tune mIoU: {base[0]['miou']:.2f}\n")
     rep.append("Note: differences smaller than the paired-bootstrap CI of the tuning set are not evidence; "
-               "check results/comparisons.md before treating rank 1 as better than the baseline.\n")
+               "check the comparisons table before treating rank 1 as better than the baseline.\n")
     for name, lst in (("Task 1", t1), ("Task 2", t2), ("Combined", cb)):
         rep += [f"## {name}", "", "| rank | exp | mIoU | data |", "|---|---|---|---|"]
         rep += [f"| {i + 1} | {r['exp_name']} | {r['miou']:.2f} | seeds={len(r['miou_seeds'])}, "

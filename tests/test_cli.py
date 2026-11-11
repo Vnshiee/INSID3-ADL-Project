@@ -97,5 +97,5 @@ def test_verify_upstream_script():
 
 
 def test_shell_scripts_parse():
-    for f in glob.glob(os.path.join(ROOT, "*.sh")) + [os.path.join(SCRIPTS, "common.sh")]:
+    for f in glob.glob(os.path.join(ROOT, "*.sh")):
         assert subprocess.run(["bash", "-n", f]).returncode == 0, f

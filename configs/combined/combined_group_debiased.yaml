@@ -1,4 +1,0 @@
-# Phase-5 ablation: group reference tokens in the debiased (instead of original) space.
-_base_: combined.yaml
-prototypes: {cluster_space: debiased}
-run: {exp_name: combined_group_debiased}
